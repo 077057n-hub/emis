@@ -7,23 +7,161 @@
 <style>
 :root{--g:#1f4d43;--ln:#2b2b2b;--bg:#f3f1ea;--rd:#b3261e}
 *{box-sizing:border-box}
-html,body{overflow-x:hidden}body{margin:0;background:var(--bg);font-family:Tahoma,'Segoe UI',Arial,sans-serif;color:#1b1b1b;line-height:1.6}
-.wrap{max-width:860px;margin:0 auto;padding:14px}
+body{margin:0;background:var(--bg);font-family:Tahoma,'Segoe UI',Arial,sans-serif;color:#1b1b1b;line-height:1.6}
+.wrap{width:100%;max-width:860px;margin:0 auto;padding:14px}
 header{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
 header h1{font-size:20px;margin:0;color:var(--g)}
 header small{display:block;color:#555;font-size:13px}
 h2{margin:18px 0 0;padding:8px 12px;background:#e4e2d8;border:1.5px solid var(--ln);border-bottom:0;font-size:16px}
-.grid{border:1.5px solid var(--ln);background:#fff;display:grid;grid-template-columns:1fr}
-.f{display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-top:1px solid #cfcfc6}
+.grid{border:1.5px solid var(--ln);background:#fff;display:grid;grid-template-columns:minmax(0,1fr)}
+.f{min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-top:1px solid #cfcfc6}
 .f:first-child{border-top:0}
 .f span{font-size:14px;font-weight:600}
 .f b{color:var(--rd);margin-inline-start:3px}
 input,select{font:inherit;font-size:16px;padding:8px 10px;border:1px solid #b9b9b0;border-radius:6px;background:#fff;width:100%}
 input:focus,select:focus{outline:2px solid var(--g);outline-offset:1px}
-.hp{position:absolute;top:0;inset-inline-start:0;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.hp{display:none}
 .notes{margin:18px 0;font-size:14px;color:#444}
 .notes ol{margin:4px 0;padding-inline-start:22px}
 button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:12px 22px;background:var(--g);color:#fff;font-weight:700}
 button.l{background:#fff;color:var(--g);border:1px solid var(--g);padding:7px 14px}
 .msg{margin:12px 0;padding:10px 12px;border-radius:8px;display:none}
 .msg.e{display:block;background:#fbe9e7;color:var(--rd)}
+.done{text-align:center;padding:40px 10px;display:none}
+.done h2{background:none;border:0;color:var(--g);font-size:22px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.f{border-top:0;border-bottom:1px solid #cfcfc6}.f:nth-child(odd){border-inline-start:1px solid #cfcfc6}}
+/* admin */
+#adm{display:none}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.bar input{max-width:260px}
+.tw{overflow:auto;max-height:70vh;border:1px solid #bbb;background:#fff}
+table{border-collapse:collapse;font-size:13px;white-space:nowrap}
+th,td{border:1px solid #ddd;padding:5px 8px}
+th{background:#e4e2d8;position:sticky;top:0}
+tr.ok{background:#e7f2ea}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="pub">
+ <header>
+  <div><h1>استمارة إضافة الطالب لنظام إدارة المعلومات التربوية (EMIS)</h1>
+  <small>املأ المعلومات بدقة وبخط واضح. الحقول التي عليها <b style="color:var(--rd)">*</b> إلزامية.</small></div>
+ </header>
+ <form id="fm" novalidate></form>
+ <div class="done" id="done"><h2>تم استلام الاستمارة ✔</h2><p>شكراً لك. سيتم تسجيل بيانات الطالب في النظام. لا حاجة لإرسالها مرة ثانية.</p><button class="l" onclick="location.reload()">تسجيل طالب آخر</button></div>
+</section>
+
+<section id="adm">
+ <header><h1>لوحة الإدارة — الردود</h1></header>
+ <div id="login" class="bar"><input id="pw" type="password" placeholder="كلمة السر"><button onclick="login()">دخول</button></div>
+ <div id="lmsg" class="msg"></div>
+ <div id="data" style="display:none">
+  <div class="bar"><input id="q" placeholder="بحث بالاسم أو الرقم أو الصف"><button class="l" onclick="csv()">تنزيل Excel (CSV)</button><span id="cnt"></span></div>
+  <div class="tw"><table id="tb"></table></div>
+ </div>
+</section>
+
+</div>
+<script>
+const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
+const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
+const GR=['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي','الأول المتوسط','الثاني المتوسط','الثالث المتوسط','الرابع الإعدادي','الخامس الإعدادي','السادس الإعدادي'];
+// [key,label,type(t/d/n/p/s),required,options]  — عنصر بطول 1 = عنوان قسم
+const F=[
+['وثائق التعريف'],
+['full_name','الاسم','t',1],['father_name','اسم الأب','t',1],['grandfather_name','اسم والد الأب','t',1],['great_grandfather_name','اسم جد الأب','t'],['surname','اللقب','t'],
+['mother_name','اسم الأم','t',1],['mother_father_name','اسم والد الأم','t',1],['mother_grandfather_name','اسم جد الأم','t',1],
+['birth_date','تاريخ التولد','d',1],['nationality','الجنسية','t',1],['national_id','رقم البطاقة الوطنية','n',1],
+['المعلومات الشخصية وبيانات الطالب'],
+['gender','الجنس','s',1,['ذكر','أنثى']],['birthplace','مسقط الرأس','t'],
+['mother_tongue','اللغة الأم','s',1,['العربية','الكردية','التركمانية','السريانية','أخرى']],
+['marital_status','الحالة الاجتماعية','s',0,['أعزب','متزوج']],
+['blood_type','فئة الدم','s',0,['A+','A-','B+','B-','AB+','AB-','O+','O-']],
+['religion','الديانة','s',1,['الإسلام','المسيحية','الصابئة المندائية','الإيزيدية','أخرى']],
+['home_phone','رقم هاتف المنزل (ولي الأمر)','p',1],
+['special_needs','الاحتياجات الخاصة (اكتب: لا يوجد)','t',1],
+['economic_level','المستوى الاقتصادي','s',1,['تحت خط الفقر','فقيرة','متوسطة','عليا']],
+['social_welfare','مشمول بمنحة الرعاية الاجتماعية؟','s',1,['نعم','كلا']],
+['prev_result','نتيجة العام الدراسي السابق','s',1,['ناجح','راسب','تسجيل جديد']],
+['grade','الصف الدراسي الحالي','s',1,GR],['section','الشعبة','t'],
+['address_district','العنوان (القضاء أو الناحية)','t',1],['city_village','المدينة / القرية','t'],
+['neighborhood','الحي','t'],['mahalla','المحلة','t'],['alley','زقاق','t'],['landmark','أقرب نقطة دالة','t',1],
+['تُملأ في حال كان للطالب هوية الأحوال المدنية'],
+['civil_id_no','رقم هوية الأحوال المدنية','n'],['nationality_cert_no','رقم شهادة الجنسية','n'],
+['registry_no','رقم السجل','n'],['page_no','رقم الصحيفة','n'],['issuer','جهة الإصدار','t']
+];
+const $=s=>document.querySelector(s);
+
+/* ---------- نموذج الطلاب ---------- */
+(function build(){
+  let h='',open=false;
+  F.forEach(f=>{
+    if(f.length===1){if(open)h+='</div>';h+=`<h2>${f[0]}</h2><div class="grid">`;open=true;return}
+    const [k,l,t,r,o]=f,rq=r?' required':'';
+    const inp=t==='s'
+      ?`<select name="${k}"${rq}><option value="">اختر</option>${o.map(x=>`<option>${x}</option>`).join('')}</select>`
+      :`<input name="${k}"${rq} type="${t==='d'?'date':t==='p'?'tel':'text'}"${t==='n'||t==='p'?' inputmode="numeric"':''} autocomplete="off">`;
+    h+=`<label class="f"><span>${l}${r?'<b>*</b>':''}</span>${inp}</label>`;
+  });
+  h+=`</div><input class="hp" name="website" tabindex="-1" autocomplete="off">
+  <div class="notes"><b>ملاحظات</b><ol><li>يجب كتابة المعلومات بدقة وبخط واضح.</li><li>المعلومات المحددة بنجمة يجب كتابتها.</li><li>ارفاق نسخة من مستمسكات الطالب (البطاقة الوطنية، بطاقة السكن).</li></ol></div>
+  <div class="msg" id="err"></div><button id="sb" type="submit">إرسال الاستمارة</button>`;
+  $('#fm').innerHTML=h;
+})();
+
+$('#fm').onsubmit=async e=>{
+  e.preventDefault();
+  const fm=e.target,err=$('#err');err.className='msg';
+  if(fm.website.value)return;
+  const bad=[...fm.elements].find(x=>x.required&&!x.value.trim());
+  if(bad){err.textContent='رجاءً أكمل الحقول الإلزامية (عليها نجمة).';err.className='msg e';bad.focus();return}
+  const d={};new FormData(fm).forEach((v,k)=>{if(k!=='website')d[k]=v.trim()||null});
+  $('#sb').disabled=true;
+  try{
+    const r=await fetch(URL_+'/rest/v1/student_submissions',{method:'POST',headers:{...H,Prefer:'return=minimal'},body:JSON.stringify(d)});
+    if(r.ok){fm.style.display='none';$('#done').style.display='block';scrollTo(0,0);return}
+    err.textContent=r.status===409?'هذا الرقم الوطني مسجّل مسبقاً. إذا تحتاج تعديل، راجع إدارة المدرسة.':'صار خطأ بالإرسال، حاول مرة ثانية.';
+  }catch(x){err.textContent='لا يوجد اتصال بالإنترنت، حاول مرة ثانية.'}
+  err.className='msg e';$('#sb').disabled=false;
+};
+
+/* ---------- لوحة الإدارة (#admin) ---------- */
+let rows=[],PW='';
+function route(){const a=location.hash==='#admin';$('#pub').style.display=a?'none':'block';$('#adm').style.display=a?'block':'none'}
+addEventListener('hashchange',route);route();
+
+async function login(){
+  PW=$('#pw').value;const m=$('#lmsg');m.className='msg';
+  const r=await fetch(URL_+'/rest/v1/rpc/admin_list',{method:'POST',headers:H,body:JSON.stringify({pw:PW})});
+  if(!r.ok){m.textContent='كلمة السر غير صحيحة.';m.className='msg e';return}
+  rows=await r.json();$('#login').style.display='none';$('#data').style.display='block';draw();
+}
+const fields=F.filter(f=>f.length>1);
+function draw(){
+  const q=$('#q').value.trim(),v=rows.filter(r=>!q||Object.values(r).join(' ').includes(q));
+  $('#cnt').textContent=`${v.length} من ${rows.length}`;
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  $('#tb').innerHTML='<tr><th>أُدخل بالإيمس</th>'+fields.map(f=>`<th>${f[1]}</th>`).join('')+'<th>وقت الإرسال</th></tr>'+
+   v.map(r=>`<tr class="${r.entered?'ok':''}"><td><input type="checkbox" style="width:auto" ${r.entered?'checked':''} onchange="mark(${r.id},this.checked)"></td>`+
+   fields.map(f=>`<td>${esc(r[f[0]])}</td>`).join('')+`<td>${esc(r.created_at.slice(0,16).replace('T',' '))}</td></tr>`).join('');
+}
+$('#q').oninput=draw;
+async function mark(id,val){
+  const r=await fetch(URL_+'/rest/v1/rpc/admin_mark',{method:'POST',headers:H,body:JSON.stringify({pw:PW,sid:id,val})});
+  if(r.ok){rows.find(x=>x.id===id).entered=val;draw()}else alert('تعذّر الحفظ');
+}
+function csv(){
+  const q=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+  const out=[['أُدخل بالإيمس',...fields.map(f=>f[1]),'وقت الإرسال'].map(q).join(',')];
+  rows.forEach(r=>out.push([r.entered?'نعم':'',...fields.map(f=>r[f[0]]),r.created_at].map(q).join(',')));
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+out.join('\r\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='students-emis.csv';a.click();
+}
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+</script>
+</body>
+</html>
