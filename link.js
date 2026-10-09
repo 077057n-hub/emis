@@ -69,7 +69,7 @@ function listen(){
  },()=>{})});
 }
 
-U.onAuthStateChanged(auth,u=>{user=u;lastLm=-1;listen()});
+U.onAuthStateChanged(auth,u=>{user=u;lastLm=-1;listen();if(u)F.getDoc(F.doc(db,'users',u.uid,'data','main')).catch(e=>toast('خطأ المزامنة: '+(e.code||e.message)))});
 setInterval(()=>{if(!user||D.lm===lastLm)return;lastLm=D.lm;
  linked().forEach(c=>{pushSec(c).catch(()=>{});pushGr(c)})},2500);
 
