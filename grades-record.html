@@ -62,8 +62,44 @@ nav .on{color:var(--pr);font-weight:700}
 .chips span{flex:1;text-align:center;background:var(--card);border-radius:12px;padding:8px;font-size:14px}
 hr{border:0;border-top:1px solid var(--bd);margin:12px 0}
 #pr{display:none}
-@page{size:A4 landscape;margin:8mm}
-@media print{#app,nav,.ov,.t{display:none!important}body{background:#fff;padding:0}#pr{display:block;background:#fff;color:#000}.pg{page-break-after:always}#pr table{border-collapse:collapse;width:100%;font-size:12px}#pr td,#pr th{border:1px solid #000;padding:7px 2px;text-align:center}}
+@page{size:A4 portrait;margin:8mm}
+@media print{
+#app,nav,.ov,.t{display:none!important}
+html,body{background:#fff!important;margin:0!important;padding:0!important}
+#pr{display:block;background:#fff;color:#111}
+#pr,#pr *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#pr .rs table{border-collapse:collapse;width:100%;min-width:0}
+#pr .rs td,#pr .rs th{border:1px solid #000;padding:7px 3px;text-align:center;font-size:14px;background:#fff!important;color:#000!important;position:static!important;min-width:0!important}
+#pr .rs th{background:#e6e6e6!important}
+.pp{width:100%;height:calc(100vh - 2mm);display:flex;flex-direction:column;box-sizing:border-box;direction:rtl;color:#111;background:#fff;overflow:hidden;page-break-after:always;break-after:page;font-family:Tajawal,"Segoe UI",Tahoma,Arial,sans-serif}
+.pp:last-child{page-break-after:auto;break-after:auto}
+.pp .top{flex:0 0 33mm;display:flex;gap:3mm;margin-bottom:3mm}
+.pp .bx{border:.8mm solid #1f3b9d;border-radius:3mm;padding:1.5mm 3mm;display:flex;flex-direction:column;justify-content:center}
+.pp .tb{flex:1.45;text-align:center}
+.pp .ib{flex:1}
+.pp .t1,.pp .t2{color:#c0392b;font-weight:700;font-size:15px;line-height:1.5}
+.pp .t2{margin-top:2mm}
+.pp .cir{flex:0 0 12mm;height:12mm;border:.6mm solid #1f3b9d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-top:1mm}
+.pp .ln{font-size:13px;border-bottom:.3mm dotted #444;padding:1mm 0;margin:.5mm 0}
+.pp .mtw{flex:1 1 0;min-height:0}
+.pp table.mt{width:100%;min-width:0;height:100%;table-layout:fixed;border-collapse:collapse}
+.pp .mt tr.br{height:10mm}
+.pp .mt td,.pp .mt th{border:.4mm solid #1f3b9d;padding:0;text-align:center;overflow:hidden;position:static;min-width:0;background:#fff;color:#111}
+.pp .mt tr.h1{height:8mm}
+.pp .mt tr.h2{height:32mm}
+.pp .mt th.les{background:#2f4fa8;color:#fff;font-size:20px;font-weight:700}
+.pp .mt th.grp{background:#1f3b9d;color:#fff;font-size:14px;font-weight:700}
+.pp .mt th.v{background:#eef2fb;font-size:11px;font-weight:700}
+.pp .vt{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);line-height:1.15;white-space:nowrap}
+.pp .mt td.lb{background:#fbe9e5;border:.5mm solid #c0392b;border-radius:2mm;color:#b03020;font-weight:700;font-size:13px;line-height:1.2;padding:0 1mm}
+.pp .mt td.v2{font-weight:700;font-size:14px}
+.pp .tw2{flex:0 0 26mm;margin-top:3mm}
+.pp .mt td.lb2{background:#d9432b;color:#fff;font-weight:700;font-size:16px;border:.5mm solid #d9432b}
+.pp .bot{flex:0 0 14mm;margin-top:4mm;display:flex;gap:2mm;align-items:stretch}
+.pp .bl{flex:0 0 31mm;border:.6mm solid #1f3b9d;border-radius:2mm;background:#eef2fb;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.pp .bv{flex:0 0 24mm;border:.6mm solid #1f3b9d;border-radius:2mm;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.pp .bv.w{flex:1}
+}
 </style>
 </head>
 <body>
@@ -216,18 +252,37 @@ const bk=()=>modal('💾 النسخ الاحتياطي',`<p class="mu">بيان�
 /* ---------- التصدير (PDF / Excel) ---------- */
 const YR=()=>{const d=new Date(),y=d.getFullYear();return d.getMonth()>=8?y+' / '+(y+1):(y-1)+' / '+y};
 const cellsOf=(id,sb)=>{const k=calc(id,sb),g=k.g;return [g[0],g[1],g[2],g[3],k.a1,g[4],g[5],g[6],g[7],g[8],k.a2,k.annual,k.fe,k.final,g[10],k.sec].map(num)};
-function sheetHTML(s,yr){const c=C(),r=res(s.id);
- const rows=c.sub.map(sb=>`<tr><td align="right"><b>${esc(sb)}</b></td>${cellsOf(s.id,sb).map(x=>`<td align="center">${x===null?'':x}</td>`).join('')}</tr>`).join('');
- return `<table border="1" cellspacing="0" cellpadding="4" dir="rtl" style="border-collapse:collapse">
-<tr><td colspan="17" align="center"><b>المعدل الشهري والسنوي للمدارس الابتدائية لصفي الخامس والسادس</b></td></tr>
-<tr><td colspan="9" align="right">الاسم: <b>${esc(s.n)}</b></td><td colspan="4" align="right">الصف: ${c.g}</td><td colspan="4" align="right">الشعبة: ${esc(c.s)}</td></tr>
-<tr><td colspan="9" align="right">الرقم: ${esc(s.adm||s.no)}</td><td colspan="8" align="right">لسنة: ${esc(yr)}</td></tr>
-<tr><th bgcolor="#dce8f7">الدروس</th>${HD.map(h=>`<th bgcolor="#dce8f7">${h}</th>`).join('')}</tr>${rows}
-<tr><td colspan="6" align="right">نتيجة الامتحان: <b>${r.t}</b>${r.n?' (راسب بـ '+r.n+')':''}</td><td colspan="6" align="right">مرشد الصف:</td><td colspan="5" align="right">المدير:</td></tr></table>`;}
+function sheetHTML(s,yr,p){const c=C(),r=res(s.id),N=Math.max(c.sub.length,1);
+ const H=m=>p?` style="height:${m}mm"`:'';
+ const rh=p?Math.min(22,(186-62)/N).toFixed(1):0;
+ const rows=c.sub.map(sb=>`<tr${H(rh)}><td class="sn" align="right"><b>${esc(sb)}</b></td>${cellsOf(s.id,sb).map(x=>`<td align="center">${x===null?'':x}</td>`).join('')}</tr>`).join('');
+ const cg=p?'<colgroup><col style="width:16%">'+'<col>'.repeat(16)+'</colgroup>':'';
+ const t=`<table border="1" cellspacing="0" cellpadding="4" dir="rtl" style="border-collapse:collapse">${cg}
+<tr${H(11)}><td class="tt" colspan="17" align="center"><b>المعدل الشهري والسنوي للمدارس الابتدائية لصفي الخامس والسادس</b></td></tr>
+<tr${H(9)}><td class="inf" colspan="9" align="right">الاسم: <b>${esc(s.n)}</b></td><td class="inf" colspan="4" align="right">الصف: ${c.g}</td><td class="inf" colspan="4" align="right">الشعبة: ${esc(c.s)}</td></tr>
+<tr${H(9)}><td class="inf" colspan="9" align="right">الرقم: ${esc(s.adm||s.no)}</td><td class="inf" colspan="8" align="right">لسنة: ${esc(yr)}</td></tr>
+<tr${H(18)}><th bgcolor="#dce8f7">الدروس</th>${HD.map(h=>`<th bgcolor="#dce8f7">${h}</th>`).join('')}</tr>${rows}
+<tr${H(15)}><td class="inf" colspan="6" align="right">نتيجة الامتحان: <b>${r.t}</b>${r.n?' (راسب بـ '+r.n+')':''}</td><td class="inf" colspan="6" align="right">مرشد الصف:</td><td class="inf" colspan="5" align="right">المدير:</td></tr></table>`;
+ return p?`<div class="in">${t}</div>`:t;}
+const VH=['تشرين الأول','تشرين الثاني','كانون الأول','كانون الثاني','معدل النصف الأول','امتحان نصف السنة','شباط','آذار','نيسان','أيار','معدل النصف الثاني','المعدل السنوي','الامتحانات النهائية','الدرجة النهائية','امتحان الدور الثاني','الدرجة الأخيرة'];
+function paperHTML(s,yr){const c=C(),r=res(s.id),R=Math.max(12,c.sub.length);
+ const V=(i,sp)=>`<th class="v"${sp?' rowspan="2"':''}><div class="vt">${VH[i]}</div></th>`;
+ const subs=c.sub.map(sb=>({n:sb,v:cellsOf(s.id,sb)}));
+ while(subs.length<R)subs.push({n:'',v:Array(16).fill(null)});
+ const sums=Array.from({length:16},(_,i)=>{const a=subs.map(x=>x.v[i]).filter(x=>x!==null);return a.length?a.reduce((p,q)=>p+q,0):''});
+ const cg='<colgroup><col style="width:15%">'+'<col>'.repeat(16)+'</colgroup>';
+ const body=subs.map(x=>`<tr class="br"><td class="lb">${esc(x.n)}</td>${x.v.map(z=>`<td class="v2">${z===null?'':z}</td>`).join('')}</tr>`).join('');
+ return `<div class="pp"><div class="top">
+<div class="bx tb"><div class="t1">المعدل الشهري والسنوي للمدارس الابتدائية<br>لصفي الخامس والسادس</div><div class="t2">لسنة ${esc(yr)}</div></div>
+<div class="cir">${esc(s.no)}</div>
+<div class="bx ib"><div class="ln"><b>الاسم:</b> ${esc(s.n)}</div><div class="ln"><b>الصف:</b> ${esc(c.g)} &nbsp; <b>الشعبة:</b> ${esc(c.s)}</div><div class="ln"><b>الرقم:</b> ${esc(s.adm||s.no)}</div></div></div>
+<div class="mtw"><table class="mt" dir="rtl">${cg}<tr class="h1"><th rowspan="2" class="les">الدروس</th><th colspan="6" class="grp">النصف الأول</th><th colspan="5" class="grp">النصف الثاني</th>${[11,12,13,14,15].map(i=>V(i,1)).join('')}</tr><tr class="h2">${[0,1,2,3,4,5,6,7,8,9,10].map(i=>V(i)).join('')}</tr>${body}</table></div>
+<div class="tw2"><table class="mt" dir="rtl">${cg}<tr><td class="lb2">المجموع</td>${sums.map(x=>`<td class="v2">${x}</td>`).join('')}</tr><tr><td class="lb2">النتيجة</td>${'<td></td>'.repeat(16)}</tr></table></div>
+<div class="bot"><div class="bl">نتيجة الامتحان</div><div class="bv">${r.t==='—'?'':r.t}</div><div class="bl">مرشد الصف</div><div class="bv w"></div><div class="bl" style="flex-basis:22mm">المدير</div><div class="bv w"></div></div></div>`;}
 const sel=()=>{const w=$('#who').value,a=S();return {L:w==='all'?a:a.filter(s=>s.id===w),yr:$('#yr').value}};
 const rosterHTML=()=>{const c=C(),h=t=>`<th bgcolor="#dce8f7">${t}</th>`;return `<table border="1" cellspacing="0" cellpadding="4" dir="rtl" style="border-collapse:collapse"><tr><td colspan="4" align="center"><b>الفهرست — ${esc(cname(c))}</b></td></tr><tr>${h('ت')}${h('اسم الطالب')}${h('رقم القبول')}${h('ملاحظات')}</tr>${S().map(s=>`<tr><td align="center">${s.no}</td><td align="right">${esc(s.n)}</td><td align="center">${esc(s.adm||'')}</td><td align="right">${esc(s.nt||'')}</td></tr>`).join('')}</table>`};
 function pdf(r){const {L,yr}=sel();document.querySelectorAll('#pr').forEach(x=>x.remove());
- const p=document.createElement('div');p.id='pr';p.innerHTML=r?`<div class="pg">${rosterHTML()}</div>`:L.map(s=>`<div class="pg">${sheetHTML(s,yr)}</div>`).join('');
+ const p=document.createElement('div');p.id='pr';p.innerHTML=r?`<div class="rs">${rosterHTML()}</div>`:L.map(s=>paperHTML(s,yr)).join('');
  document.body.appendChild(p);window.onafterprint=()=>p.remove();setTimeout(()=>window.print(),150)}
 const xls=(L,yr,r)=>'<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" dir="rtl"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>السجل</x:Name><x:WorksheetOptions><x:DisplayRightToLeft/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>'+(r?rosterHTML():L.map(s=>sheetHTML(s,yr)).join('<br style="mso-special-character:line-break;page-break-before:always">'))+'</body></html>';
 async function out(txt,name,type){
