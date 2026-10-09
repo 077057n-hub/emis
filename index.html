@@ -75,7 +75,7 @@ tr.ok{background:#e7f2ea}
 const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
 const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
-const GR=['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي','الأول المتوسط','الثاني المتوسط','الثالث المتوسط','الرابع الإعدادي','الخامس الإعدادي','السادس الإعدادي'];
+const GR=['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي'];
 // [key,label,type(t/d/n/p/s),required,options]  — عنصر بطول 1 = عنوان قسم
 const F=[
 ['وثائق التعريف'],
@@ -93,7 +93,7 @@ const F=[
 ['economic_level','المستوى الاقتصادي','s',1,['تحت خط الفقر','فقيرة','متوسطة','عليا']],
 ['social_welfare','مشمول بمنحة الرعاية الاجتماعية؟','s',1,['نعم','كلا']],
 ['prev_result','نتيجة العام الدراسي السابق','s',1,['ناجح','راسب','تسجيل جديد']],
-['grade','الصف الدراسي الحالي','s',1,GR],['section','الشعبة','t'],
+['grade','الصف الدراسي الحالي','s',1,GR],['section','الشعبة','s',1,['أ','ب']],
 ['address_district','العنوان (القضاء أو الناحية)','t',1],['city_village','المدينة / القرية','t'],
 ['neighborhood','الحي','t'],['mahalla','المحلة','t'],['alley','زقاق','t'],['landmark','أقرب نقطة دالة','t',1],
 ['تُملأ في حال كان للطالب هوية الأحوال المدنية'],
@@ -200,6 +200,5 @@ function csv(){
 }
 $('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 </script>
-<script type="module" src="link.js"></script>
 </body>
 </html>
