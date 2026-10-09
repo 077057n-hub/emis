@@ -9,9 +9,14 @@ const p0=window.pdf;
 window.pdf=r=>{const y=document.querySelector('#yr');if(y&&!y.value.includes('\u202D'))y.value='\u202D'+y.value.replace(/[\u202D\u202C]/g,'')+'\u202C';p0(r)};
 
 /* ---- زر 🔗 بالشريط العلوي ---- */
-const r0=window.render;
-const btn=()=>{const r=document.querySelector('header .top .row');if(r&&!r.querySelector('#lk')){const b=document.createElement('button');b.className='ic';b.id='lk';b.textContent='🔗';b.onclick=linkUI;r.insertBefore(b,r.firstChild)}};
-window.render=function(){r0();btn()};
+const btn=()=>{
+ const r=document.querySelector('#app .top .row'),old=document.getElementById('lk');
+ if(r){if(r.contains(old))return;if(old)old.remove();
+  const b=document.createElement('button');b.className='ic';b.id='lk';b.textContent='🔗';b.onclick=()=>linkUI();r.insertBefore(b,r.firstChild)}
+ else if(!old){const b=document.createElement('button');b.id='lk';b.textContent='🔗';b.onclick=()=>linkUI();
+  b.style.cssText='position:fixed;top:10px;left:10px;z-index:8;width:44px;height:44px;border:0;border-radius:12px;font-size:20px';document.body.appendChild(b)}
+};
+new MutationObserver(btn).observe(document.getElementById('app'),{childList:true,subtree:true});
 btn();
 
 /* ---- Firebase (نفس مشروعك) ---- */
