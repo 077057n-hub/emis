@@ -61,7 +61,7 @@ window.lkOpen=async i=>{
   const q=await F.getDocs(F.query(F.collection(db,'sections',l.code,'grades'),F.where('sub','==',l.subject)));
   const docs={};q.forEach(x=>{const o=x.data();docs[o.sid]=o.v||{}});
   DATA[k]={roster,docs};
- }catch(e){toast('تعذر تحميل الشعبة، تأكد من الإنترنت');LK.cur=null}
+ }catch(e){toast('تعذر: '+(e.code||e.message||'خطأ'));LK.cur=null}
  render();
 };
 window.lkAdd=()=>modal('🔗 رمز الشعبة','<input id="lc" dir="ltr" placeholder="الرمز من مرشد الصف" style="text-transform:uppercase">',m=>{
@@ -77,7 +77,7 @@ async function lkFetch(code){
    const subject=subs[+b.dataset.i];
    if(links.some(x=>x.code===code&&x.subject===subject)){m.remove();return toast('مربوطة مسبقاً')}
    links.push({code,name:d.name||code,subject});keep();m.remove();render();toast('تم الربط ✅')});
- }catch(e){toast('تعذر الاتصال، تأكد من الإنترنت')}
+ }catch(e){toast('تعذر: '+(e.code||e.message||'خطأ'))}
 }
 window.lkLogin=()=>modal('☁️ تسجيل الدخول','<p class="mu">سجّل بإيميلك حتى تصل درجاتك لمرشد الصف.</p><input id="le" type="email" dir="ltr" placeholder="الإيميل"><input id="lp" type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف على الأقل)"><button class="b" onclick="lkAuth(0)">دخول</button><button class="b g" onclick="lkAuth(1)">إنشاء حساب جديد</button>');
 window.lkAuth=async s=>{
