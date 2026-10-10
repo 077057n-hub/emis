@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>إدارة المدرسة</title>
+<style>
+:root{--g:#1f4d43;--bg:#f3f1ea;--bd:#d6d3c6}
+*{box-sizing:border-box}
+body{margin:0 auto;background:var(--bg);font-family:Tahoma,Arial,sans-serif;padding:14px;max-width:760px;color:#1b1b1b}
+h1{font-size:20px;color:var(--g)}
+.c{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
+input,select,button{font:inherit;padding:9px 10px;border-radius:8px;border:1px solid #bbb;width:100%;margin:4px 0}
+button{background:var(--g);color:#fff;border:0;font-weight:700;cursor:pointer}
+button.l{background:#fff;color:var(--g);border:1px solid var(--g)}
+.r{display:flex;gap:6px;align-items:center;border-bottom:1px solid #eee;padding:6px 0}
+.r b{flex:1;font-weight:600}
+.r button,.r select{width:auto;padding:6px 10px;margin:0}
+.t{display:flex;gap:6px;margin:10px 0}
+.t button{flex:1;margin:0;background:#fff;color:var(--g);border:1px solid var(--g)}
+.t .on{background:var(--g);color:#fff}
+.m{color:#666;font-size:13px}
+label.k{display:inline-flex;gap:4px;align-items:center;margin:4px 0 4px 10px}
+label.k input{width:auto;margin:0}
+</style>
+</head>
+<body>
+<h1>🏫 إدارة المدرسة</h1>
+<div id="app"></div>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {getFirestore,collection,doc,getDocs,setDoc,updateDoc,deleteDoc,addDoc,writeBatch,query,orderBy,limit} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+const app=initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
+const auth=getAuth(app),db=getFirestore(app);
+const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
+const GR=['الأول','الثاني','الثالث','الرابع','الخامس','السادس'],SEC=['أ','ب'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
+const by=(a,b)=>norm(a.n).localeCompare(norm(b.n),'ar');
+const msg=t=>{const e=$('#ms');if(e)e.textContent=t};
+const ok=async f=>{try{await f()}catch(e){msg('تعذر: '+(e.code||e.message))}};
+let tab='imp',user=null,roster=null,prev=null,TC={};
+const loadR=async force=>{if(!roster||force)roster=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()}));return roster};
+
+function render(){
+ const A=$('#app');
+ if(!user){A.innerHTML='<div class="c"><input id="em" type="email" dir="ltr" placeholder="الإيميل"><input id="pw" type="password" dir="ltr" placeholder="كلمة المرور"><button onclick="lg()">دخول</button></div><p class="m" id="ms"></p>';return}
+ A.innerHTML=`<p class="m">${esc(user.email)} — <a href="#" onclick="out();return false">خروج</a></p><div class="t">${[['imp','استيراد'],['tc','المعلمون'],['st','الطلاب'],['lg','النقل']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</div><div id="v"></div><p class="m" id="ms"></p>`;
+ ({imp:vImp,tc:vTc,st:vSt,lg:vLg})[tab]();
+}
+Object.assign(window,{
+ go:k=>{tab=k;render()},
+ out:()=>signOut(auth),
+ lg:()=>ok(()=>signInWithEmailAndPassword(auth,$('#em').value.trim(),$('#pw').value))
+});
+onAuthStateChanged(auth,u=>{user=u;render()});
+
+/* ---- استيراد من الإيمس ---- */
+function vImp(){
+ $('#v').innerHTML='<div class="c"><p>كلمة سر لوحة الإيمس:</p><input id="ip" type="password" dir="ltr"><button onclick="fetchE()">جلب من الإيمس ومعاينة</button><div id="pv"></div></div>';
+}
+window.fetchE=()=>ok(async()=>{
+ msg('جاري الجلب…');
+ const r=await fetch(URL_+'/rest/v1/rpc/admin_list',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({pw:$('#ip').value})});
+ if(!r.ok)return msg('كلمة السر غير صحيحة');
+ const rows=await r.json(),ex=await loadR(true);
+ const ids=new Set(ex.map(x=>x.eid)),names=new Set(ex.filter(x=>!x.del).map(x=>norm(x.n)));
+ const add=[];let dup=0,old=0,skip=0,nosec=0;
+ rows.forEach(x=>{
+  const g=String(x.grade||'').replace(' الابتدائي','');
+  if(!GR.includes(g)){skip++;return}
+  const eid='e'+x.id;
+  if(ids.has(eid)){old++;return}
+  const n=[x.full_name,x.father_name,x.grandfather_name].filter(Boolean).join(' ').trim();
+  if(!n||names.has(norm(n))){dup++;return}
+  const s0=norm(x.section).toLowerCase();
+  const s=s0==='ا'||s0==='a'?'أ':s0==='ب'||s0==='b'?'ب':'—';
+  if(s==='—')nosec++;
+  names.add(norm(n));add.push({eid,n,g,s});
+ });
+ prev=add;
+ const cnt={};add.forEach(x=>{const k=x.g+' / '+x.s;cnt[k]=(cnt[k]||0)+1});
+ $('#pv').innerHTML=`<p>جديد: <b>${add.length}</b> — مكرر بالاسم: ${dup} — مستورد سابقاً: ${old} — خارج الابتدائي: ${skip}${nosec?` — بدون شعبة: ${nosec}`:''}</p>`+Object.entries(cnt).map(([k,v])=>`<div class="r"><b>${esc(k)}</b>${v}</div>`).join('')+(add.length?`<button onclick="saveE()">حفظ ${add.length} طالب</button>`:'');
+ msg('');
+});
+window.saveE=()=>ok(async()=>{
+ for(let i=0;i<prev.length;i+=400){
+  const b=writeBatch(db);
+  prev.slice(i,i+400).forEach(x=>b.set(doc(db,'roster',x.eid),{n:x.n,g:x.g,s:x.s,u:Date.now()}));
+  await b.commit();
+ }
+ msg('تم حفظ '+prev.length+' طالب ✅');prev=null;roster=null;$('#pv').innerHTML='';
+});
+
+/* ---- المعلمون ---- */
+async function vTc(){
+ const s=await getDocs(collection(db,'teachers'));TC={};
+ s.docs.forEach(d=>TC[d.id]=d.data().grades||[]);
+ $('#v').innerHTML='<div class="c"><input id="te" type="email" dir="ltr" placeholder="إيميل المعلم">'+GR.map(g=>`<label class="k"><input type="checkbox" value="${g}">${g}</label>`).join('')+'<button onclick="saveT()">حفظ</button></div>'
+  +Object.entries(TC).map(([e,g])=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(e)}<br><span class="m">${esc(g.join('، '))}</span></b><button class="l" onclick="editT('${esc(e)}')">✏️</button><button class="l" onclick="delT('${esc(e)}')">🗑</button></div>`).join('');
+}
+window.saveT=()=>ok(async()=>{
+ const e=$('#te').value.trim().toLowerCase(),g=[...document.querySelectorAll('.k input:checked')].map(x=>x.value);
+ if(!e||!g.length)return msg('اكتب الإيميل واختر صفاً واحداً على الأقل');
+ await setDoc(doc(db,'teachers',e),{grades:g});vTc();
+});
+window.editT=e=>{$('#te').value=e;document.querySelectorAll('.k input').forEach(x=>x.checked=TC[e].includes(x.value))};
+window.delT=e=>{if(confirm('حذف المعلم؟'))ok(async()=>{await deleteDoc(doc(db,'teachers',e));vTc()})};
+
+/* ---- الطلاب ---- */
+async function vSt(){
+ await loadR();
+ $('#v').innerHTML=`<div class="r"><select id="fg" onchange="drawS()">${GR.map(g=>`<option>${g}</option>`).join('')}</select><select id="fs" onchange="drawS()">${[...SEC,'—'].map(s=>`<option>${s}</option>`).join('')}</select></div><div class="c"><input id="an" placeholder="اسم طالب جديد (للصف والشعبة المختارين)"><button class="l" onclick="addS()">➕ إضافة طالب يدوياً</button></div><div id="sl"></div>`;
+ drawS();
+}
+window.drawS=()=>{
+ const g=$('#fg').value,s=$('#fs').value,L=roster.filter(x=>!x.del&&x.g===g&&x.s===s).sort(by);
+ $('#sl').innerHTML=`<p class="m">${L.length} طالب</p>`+L.map((x,i)=>`<div class="r"><span class="m">${i+1}</span><b>${esc(x.n)}</b>${SEC.filter(y=>y!==x.s).map(y=>`<button class="l" onclick="mvS('${x.eid}','${y}')">→ ${y}</button>`).join('')}<button class="l" onclick="rmS('${x.eid}')">🗑</button></div>`).join('');
+};
+window.addS=()=>ok(async()=>{
+ const n=$('#an').value.trim();if(!n)return;
+ if(roster.some(x=>!x.del&&norm(x.n)===norm(n)))return msg('الاسم موجود مسبقاً');
+ const x={n,g:$('#fg').value,s:$('#fs').value,u:Date.now()},id='m'+Date.now();
+ await setDoc(doc(db,'roster',id),x);roster.push({eid:id,...x});$('#an').value='';drawS();
+});
+window.mvS=(eid,to)=>ok(async()=>{
+ const x=roster.find(r=>r.eid===eid),from=x.s;
+ await updateDoc(doc(db,'roster',eid),{s:to,u:Date.now()});
+ await addDoc(collection(db,'moves'),{eid,n:x.n,g:x.g,from,to,by:user.email,at:Date.now()});
+ x.s=to;drawS();
+});
+window.rmS=eid=>{if(confirm('حذف الطالب من الجدول المشترك؟'))ok(async()=>{await updateDoc(doc(db,'roster',eid),{del:true,u:Date.now()});roster.find(r=>r.eid===eid).del=true;drawS()})};
+
+/* ---- سجل النقل ---- */
+async function vLg(){
+ const s=await getDocs(query(collection(db,'moves'),orderBy('at','desc'),limit(40)));
+ $('#v').innerHTML=s.docs.length?s.docs.map(d=>{const m=d.data();return `<div class="r"><b>${esc(m.n)}<br><span class="m">${esc(m.g)}: ${esc(m.from)} ← ${esc(m.to)} — ${esc(m.by)} — ${new Date(m.at).toLocaleString('ar-IQ')}</span></b>${m.undone?'<span class="m">تم التراجع</span>':`<button class="l" onclick="undo('${d.id}','${m.eid}','${esc(m.from)}')">↩️ تراجع</button>`}</div>`}).join(''):'<p class="m">لا توجد عمليات نقل</p>';
+}
+window.undo=(id,eid,from)=>ok(async()=>{
+ await updateDoc(doc(db,'roster',eid),{s:from,u:Date.now()});
+ await updateDoc(doc(db,'moves',id),{undone:true});roster=null;vLg();
+});
+</script>
+</body>
+</html>

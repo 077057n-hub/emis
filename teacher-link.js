@@ -1,6 +1,7 @@
 /* teacher-link.js — ربط دفتر المعلم (teacher-app.html) بسجل الدرجات عند مرشد الصف
    ضعه بجانب teacher-app.html وأضف قبل </body> سطر:  <script type="module" src="teacher-link.js"></script> */
 (async()=>{
+import('./teacher-roster.js').catch(()=>{});
 const cfg={apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"};
 const CO=['تشرين 1','تشرين 2','كانون 1','كانون 2','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];
 const ERR={'auth/invalid-credential':'الإيميل أو كلمة المرور غير صحيحة','auth/wrong-password':'كلمة المرور غير صحيحة','auth/user-not-found':'لا يوجد حساب بهذا الإيميل','auth/email-already-in-use':'هذا الإيميل مسجّل مسبقاً، اضغط دخول','auth/weak-password':'كلمة المرور قصيرة (6 أحرف على الأقل)','auth/invalid-email':'صيغة الإيميل غير صحيحة','auth/network-request-failed':'لا يوجد اتصال بالإنترنت'};
@@ -18,9 +19,11 @@ const fmt=x=>x===undefined||x===null?'':String(x);
 function vLk(){
  if(!ready)return empty('☁️',fail?'تعذر تحميل السحابة، تأكد من الإنترنت':'جاري التحميل…');
  if(!user)return empty('🔗','سجّل دخولك لتربط شعبتك بمرشد الصف')+'<button class="b" onclick="lkLogin()">☁️ تسجيل الدخول</button>';
+ if(LK.cur!==null&&links[LK.cur]&&links[LK.cur].cid&&links[LK.cur].cid!==D.cur){flush();LK.cur=null}
  const l=cur();
- if(!l)return '<button class="b" onclick="lkAdd()">➕ إضافة رمز شعبة</button>'
-  +(links.length?links.map((x,i)=>`<div class="card" onclick="lkOpen(${i})"><span class="n">🔗</span><b>${esc(x.name)}<br><span class="mu">المادة: ${esc(x.subject)}</span></b><button class="ic s" onclick="event.stopPropagation();lkDel(${i})">🗑</button></div>`).join(''):empty('🔗','اطلب رمز الشعبة من مرشد الصف وأضفه هنا'))
+ const vis=links.map((x,i)=>[x,i]).filter(([x])=>!x.cid||x.cid===D.cur);
+ if(!l)return `<p class="mu">الصف الحالي: ${esc(cn(D.cur))} — غيّر الصف من القائمة بالأعلى لتشوف شعبة ثانية</p><button class="b" onclick="lkAdd()">➕ ربط شعبة لهذا الصف</button>`
+  +(vis.length?vis.map(([x,i])=>`<div class="card" onclick="lkOpen(${i})"><span class="n">🔗</span><b>${esc(x.name)}<br><span class="mu">المادة: ${esc(x.subject)}</span></b><button class="ic s" onclick="event.stopPropagation();lkDel(${i})">🗑</button></div>`).join(''):empty('🔗','لا توجد شعبة مربوطة بهذا الصف. اطلب رمز شعبته من مرشد الصف وأضفه'))
   +`<button class="b g" onclick="lkOut()">🚪 تسجيل الخروج (${esc(user.email||'')})</button>`;
  const d=DATA[key(l)];
  const head=`<button class="b g" onclick="lkBack()">⬅️ رجوع</button><p class="mu">${esc(l.name)} — ${esc(l.subject)}</p>`;
@@ -76,7 +79,7 @@ async function lkFetch(code){
   m.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
    const subject=subs[+b.dataset.i];
    if(links.some(x=>x.code===code&&x.subject===subject)){m.remove();return toast('مربوطة مسبقاً')}
-   links.push({code,name:d.name||code,subject});keep();m.remove();render();toast('تم الربط ✅')});
+   links.push({code,name:d.name||code,subject,cid:D.cur||null});keep();m.remove();render();toast('تم الربط ✅')});
  }catch(e){toast('تعذر: '+(e.code||e.message||'خطأ'))}
 }
 window.lkLogin=()=>modal('☁️ تسجيل الدخول','<p class="mu">سجّل بإيميلك حتى تصل درجاتك لمرشد الصف.</p><input id="le" type="email" dir="ltr" placeholder="الإيميل"><input id="lp" type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف على الأقل)"><button class="b" onclick="lkAuth(0)">دخول</button><button class="b g" onclick="lkAuth(1)">إنشاء حساب جديد</button>');
@@ -95,6 +98,6 @@ try{
  const app=A.getApps().length?A.getApp():A.initializeApp(cfg);
  auth=U.getAuth(app);
  try{db=F.initializeFirestore(app,{localCache:F.persistentLocalCache()})}catch(e){db=F.getFirestore(app)}
- U.onAuthStateChanged(auth,u=>{user=u;ready=true;render()});
+ U.onAuthStateChanged(auth,u=>{user=u;ready=true;render();window.TL={F,db,auth,user:u};dispatchEvent(new Event('tl-user'))});
 }catch(e){fail=true;ready=false;render()}
 })();
