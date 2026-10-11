@@ -29,10 +29,10 @@ label.k input{width:auto;margin:0}
 <div id="app"></div>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {initializeAuth,browserSessionPersistence,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {getFirestore,collection,doc,getDocs,setDoc,updateDoc,deleteDoc,addDoc,writeBatch,query,orderBy,limit} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const app=initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
-const auth=getAuth(app),db=getFirestore(app);
+const auth=initializeAuth(app,{persistence:browserSessionPersistence}),db=getFirestore(app);
 const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
 const GR=['الأول','الثاني','الثالث','الرابع','الخامس','السادس'],SEC=['أ','ب'];
 const $=s=>document.querySelector(s);
