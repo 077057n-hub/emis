@@ -2,6 +2,7 @@
    ضعه بجانب teacher-app.html وأضف قبل </body> سطر:  <script type="module" src="teacher-link.js"></script> */
 (async()=>{
 import('./teacher-roster.js').catch(()=>{});
+import('./teacher-cloud.js').catch(()=>{});
 const cfg={apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"};
 const CO=['تشرين 1','تشرين 2','كانون 1','كانون 2','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];
 const ERR={'auth/invalid-credential':'الإيميل أو كلمة المرور غير صحيحة','auth/wrong-password':'كلمة المرور غير صحيحة','auth/user-not-found':'لا يوجد حساب بهذا الإيميل','auth/email-already-in-use':'هذا الإيميل مسجّل مسبقاً، اضغط دخول','auth/weak-password':'كلمة المرور قصيرة (6 أحرف على الأقل)','auth/invalid-email':'صيغة الإيميل غير صحيحة','auth/network-request-failed':'لا يوجد اتصال بالإنترنت'};

@@ -9,6 +9,7 @@
 *{box-sizing:border-box}
 body{margin:0 auto;background:var(--bg);font-family:Tahoma,Arial,sans-serif;padding:14px;max-width:760px;color:#1b1b1b}
 h1{font-size:20px;color:var(--g)}
+a{color:var(--g)}
 .c{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
 input,select,button{font:inherit;padding:9px 10px;border-radius:8px;border:1px solid #bbb;width:100%;margin:4px 0}
 button{background:var(--g);color:#fff;border:0;font-weight:700;cursor:pointer}
@@ -55,7 +56,7 @@ Object.assign(window,{
  out:()=>signOut(auth),
  lg:()=>ok(()=>signInWithEmailAndPassword(auth,$('#em').value.trim(),$('#pw').value))
 });
-onAuthStateChanged(auth,u=>{user=u;render()});
+onAuthStateChanged(auth,u=>{user=u;render();if(u)getDocs(query(collection(db,'teachers'),limit(1))).catch(e=>{if(e.code==='permission-denied'){const m=$('#ms');if(m){m.style.color='#b3261e';m.textContent='⚠️ هذا الحساب ليس مالكاً، سجّل دخول بإيميل المالك (077057n@gmail.com)'}}})});
 
 /* ---- استيراد من الإيمس ---- */
 function vImp(){
