@@ -83,4 +83,30 @@ function linkUI(){
  m.querySelector('#lr').onclick=()=>{pushSec(c).then(()=>{pushGr(c);toast('تم التحديث ✅')}).catch(()=>toast('تعذر التحديث'))};
  m.querySelector('#lq').onclick=()=>{delete c.code;save();listen();m.remove();render()};
 }
+/* ---- استيراد طلاب الشعبة من جدول المدرسة المشترك ---- */
+const nrm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
+window.impSchool=async()=>{
+ if(!user)return toast('سجّل دخولك بالسحابة ☁️ أولاً');
+ const c=C();if(!c)return toast('أضف شعبة أولاً ➕');
+ try{
+  const q=await F.getDocs(F.collection(db,'roster'));
+  const L=[];
+  q.forEach(d=>{const r=d.data();if(!r.del&&nrm(r.g)===nrm(c.g)&&nrm(r.s)===nrm(c.s))L.push({eid:d.id,n:r.n})});
+  L.sort((a,b)=>nrm(a.n).localeCompare(nrm(b.n),'ar'));
+  const mine=S();let no=Math.max(0,...mine.map(s=>s.no||0)),add=0;
+  L.forEach(r=>{
+   const s=mine.find(x=>x.eid===r.eid||x.id===r.eid)||mine.find(x=>nrm(x.n)===nrm(r.n));
+   if(!s){D.st.push({id:r.eid,eid:r.eid,c:D.cur,n:r.n,adm:'',nt:'',no:++no});add++}
+   else if(!s.eid)s.eid=r.eid;
+  });
+  const ids=new Set(L.map(r=>r.eid));
+  const gone=mine.filter(s=>s.eid&&!ids.has(s.eid)).length;
+  save();render();
+  toast(L.length?`تمت إضافة ${add} طالب${gone?` — ${gone} لم يعد بهذه الشعبة`:''}`:'لا يوجد طلاب بهذه الشعبة بجدول المدرسة');
+ }catch(e){toast(e.code==='permission-denied'?'اطلب من المالك إضافتك معلماً لهذا الصف':'تعذر: '+(e.code||e.message))}
+};
+const v0=TABS[0][3];
+TABS[0][3]=()=>(D.cur?'<button class="b g" onclick="impSchool()">📥 استيراد طلاب الشعبة من المدرسة</button>':'')+v0();
+render();
+
 })();
