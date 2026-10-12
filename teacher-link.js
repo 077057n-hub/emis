@@ -76,11 +76,14 @@ async function lkFetch(code){
   if(!s.exists())return toast('الرمز غير صحيح');
   const d=s.data(),subs=d.sub||[];
   if(!subs.length)return toast('المرشد لم يحدد مواد لهذه الشعبة');
-  const m=modal('اختر مادتك',`<p class="mu">${esc(d.name||code)}</p>`+subs.map((x,i)=>`<button class="b g" data-i="${i}">${esc(x)}</button>`).join(''));
-  m.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{
-   const subject=subs[+b.dataset.i];
-   if(links.some(x=>x.code===code&&x.subject===subject)){m.remove();return toast('مربوطة مسبقاً')}
-   links.push({code,name:d.name||code,subject,cid:D.cur||null});keep();m.remove();render();toast('تم الربط ✅')});
+  const m=modal('اختر موادك',`<p class="mu">${esc(d.name||code)}</p>`+subs.map((x,i)=>`<label class="card"><input type="checkbox" data-i="${i}" style="width:22px;margin:0"><b>${esc(x)}</b></label>`).join('')+'<button class="b" id="lkok">🔗 ربط المواد المحددة</button>');
+  m.querySelector('#lkok').onclick=()=>{
+   let n=0;
+   m.querySelectorAll('[data-i]:checked').forEach(b=>{
+    const subject=subs[+b.dataset.i];
+    if(!links.some(x=>x.code===code&&x.subject===subject)){links.push({code,name:d.name||code,subject,cid:D.cur||null});n++}});
+   if(!n)return toast('اختر مادة جديدة واحدة على الأقل');
+   keep();m.remove();render();toast('تم ربط '+n+' ✅')};
  }catch(e){toast('تعذر: '+(e.code||e.message||'خطأ'))}
 }
 window.lkLogin=()=>modal('☁️ تسجيل الدخول','<p class="mu">سجّل بإيميلك حتى تصل درجاتك لمرشد الصف.</p><input id="le" type="email" dir="ltr" placeholder="الإيميل"><input id="lp" type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف على الأقل)"><button class="b" onclick="lkAuth(0)">دخول</button><button class="b g" onclick="lkAuth(1)">إنشاء حساب جديد</button>');
