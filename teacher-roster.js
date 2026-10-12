@@ -39,6 +39,12 @@ async function start(){
   st='✅ صفوفك من المدرسة: '+grades.join('، ');render();
  },e=>{st='تعذرت المزامنة: '+(e.code||'');render()});
 }
+const cmp=(a,b)=>norm(a.n).localeCompare(norm(b.n),'ar');
+function srt(){
+ const a=D.st.map(x=>x.id).join(),b=D.st.slice().sort(cmp).map(x=>x.id).join();
+ if(a!==b){D.st.sort(cmp);save();render()}
+}
+setInterval(srt,2500);
 addEventListener('tl-user',start);
 if(window.TL&&window.TL.user)start();
 
@@ -64,4 +70,16 @@ window.rsMove=()=>{
  const chk=()=>{const id=m.querySelector('#ms2').value;m.querySelector('#mw').style.display=Object.values(D.gr[id]||{}).some(x=>x!==''&&x!==undefined)?'block':'none'};
  m.querySelector('#ms2').onchange=chk;chk();
 };
+/* بحث باسم الطالب */
+let SQ='';
+const flt=()=>{
+ const q=norm(SQ);
+ document.querySelectorAll('main .card').forEach(e=>{e.style.display=!q||norm(e.textContent).includes(q)?'':'none'});
+ document.querySelectorAll('main table tr').forEach(r=>{const td=r.querySelector('td');if(td)r.style.display=!q||norm(td.textContent).includes(q)?'':'none'});
+};
+window.sqBox=()=>`<input id="sq" placeholder="🔍 ابحث باسم الطالب" value="${esc(SQ)}" oninput="sqSet(this.value)">`;
+window.sqSet=v=>{SQ=v;flt()};
+window.sqFlt=flt;
+[0,1,2,3].forEach(i=>{const f=TABS[i][3];TABS[i][3]=()=>window.sqBox()+f()+(setTimeout(flt,0),'')});
+
 })();

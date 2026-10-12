@@ -26,7 +26,7 @@ for(let i=0;i<100&&!window.cloud;i++)await new Promise(r=>setTimeout(r,300));
 if(!window.cloud)return;
 const app=A.getApp(),auth=U.getAuth(app),db=F.getFirestore(app);
 let user=null,lastLm=-1;
-const sent={},known=new Set(),unsubs={};
+const sent={},known=new Set(),unsubs={},LU={};
 const AL='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const gen=()=>Array.from(crypto.getRandomValues(new Uint8Array(8)),x=>AL[x%32]).join('');
 const linked=()=>D.cl.filter(c=>c.code);
@@ -59,7 +59,7 @@ function listen(){
   let ch=0;
   snap.docChanges().forEach(x=>{
    const d=x.doc;if(d.metadata.hasPendingWrites)return;
-   const o=d.data(),key=o.sid+'|'+o.sub;known.add(key);
+   const o=d.data(),key=o.sid+'|'+o.sub;known.add(key);LU[c.code+'|'+o.sub]=Math.max(LU[c.code+'|'+o.sub]||0,o.u||0);
    const a=D.g[key]=D.g[key]||[],sv=sent[key]=sent[key]||Array(11).fill(null);
    for(const i in (o.v||{})){const val=o.v[i];
     if(val!==num(a[i])){a[i]=val===null?'':String(val);ch++}
@@ -99,6 +99,7 @@ window.impSchool=async()=>{
    if(!s){D.st.push({id:r.eid,eid:r.eid,c:D.cur,n:r.n,adm:'',nt:'',no:++no});add++}
    else if(!s.eid)s.eid=r.eid;
   });
+  S().slice().sort((a,b)=>nrm(a.n).localeCompare(nrm(b.n),'ar')).forEach((s,i)=>s.no=i+1);
   const ids=new Set(L.map(r=>r.eid));
   const gone=mine.filter(s=>s.eid&&!ids.has(s.eid)).length;
   save();render();
@@ -106,7 +107,40 @@ window.impSchool=async()=>{
  }catch(e){toast(e.code==='permission-denied'?'اطلب من المالك إضافتك معلماً لهذا الصف':'تعذر: '+(e.code||e.message))}
 };
 const v0=TABS[0][3];
-TABS[0][3]=()=>(D.cur?'<button class="b g" onclick="impSchool()">📥 استيراد طلاب الشعبة من المدرسة</button>':'')+v0();
+window.sortAr=()=>{S().slice().sort((a,b)=>nrm(a.n).localeCompare(nrm(b.n),'ar')).forEach((s,i)=>s.no=i+1);save();render();toast('تم الترتيب الأبجدي ✅')};
+TABS[0][3]=()=>(D.cur?'<button class="b g" onclick="impSchool()">📥 استيراد طلاب الشعبة من المدرسة</button><button class="b g" onclick="sortAr()">🔤 ترتيب الطلاب أبجدياً</button>':'')+v0();
+render();
+
+/* ---- النواقص والمراجعة السريعة ---- */
+const MS={m:0};let ROWS=[];
+function vMs(){
+ const c=C();if(!c)return empty('📉','أضف شعبة أولاً ➕');
+ const L=S();if(!L.length)return empty('👥','لا يوجد طلاب');
+ if(!c.sub.length)return empty('📚','اختر مواد الشعبة من تبويب الطلاب');
+ ROWS=c.sub.map(sb=>{
+  const miss=[],low=[];
+  L.forEach(s=>{const x=num((D.g[s.id+'|'+sb]||[])[MS.m]);if(x===null)miss.push(s);else if(x<50)low.push(s)});
+  return {sb,miss,low,lu:LU[(c.code||'')+'|'+sb]};
+ });
+ const ok=ROWS.filter(r=>!r.miss.length).length;
+ return `<div class="days">${CO.map((x,i)=>`<button class="${i===MS.m?'on':''}" onclick="msM(${i})">${x}</button>`).join('')}</div>`
+  +`<div class="chips"><span>✅ ${ok} من ${ROWS.length} مواد مكتملة</span></div>`
+  +ROWS.map((r,i)=>`<div class="card" onclick="msOpen(${i})"><b>${esc(r.sb)}<br><span class="mu">${r.lu?'آخر تحديث: '+new Date(r.lu).toLocaleDateString('ar-IQ'):'لم تصل درجات من معلم'}</span></b>${r.low.length?`<span class="pill neg">أقل من 50: ${r.low.length}</span>`:''}<span class="pill ${r.miss.length?'wn':'ok'}">${r.miss.length?'ناقص '+r.miss.length:'✅ مكتمل'}</span></div>`).join('')
+  +'<p class="mu">اضغط المادة لعرض أسماء الطلاب الناقصين أو الراسبين.</p>';
+}
+window.msM=i=>{MS.m=i;render()};
+window.msOpen=i=>{
+ const r=ROWS[i];if(!r)return;
+ const nm=s=>`<div class="card"><span class="n">${s.no}</span><b>${esc(s.n)}</b></div>`;
+ modal(esc(r.sb)+' — '+CO[MS.m],(r.miss.length?'<p><b>لم تُدخل درجتهم:</b></p>'+r.miss.map(nm).join(''):'<p>✅ كل الدرجات مدخلة</p>')+(r.low.length?'<p><b>أقل من 50:</b></p>'+r.low.map(nm).join(''):''));
+};
+TABS.push(['ms','📉','النواقص',vMs]);
+
+/* ---- بحث يتجاهل (أ/ا) و(ى/ي) ---- */
+window.list=function(){
+ const q=nrm(Q);
+ return S().filter(s=>!q||nrm(s.n).includes(q)||(s.adm||'').includes(Q.trim())).map(s=>`<div class="card"><span class="n">${s.no}</span><b>${esc(s.n)}<br><span class="mu">رقم القبول: ${esc(s.adm||'—')}</span>${s.nt?` <span class="pill wn">${esc(s.nt)}</span>`:''}</b><button class="ic s" onclick="editS('${s.id}')">✏️</button><button class="ic s" onclick="delS('${s.id}')">🗑</button></div>`).join('')||empty('👥','لا يوجد طلاب');
+};
 render();
 
 })();

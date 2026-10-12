@@ -15,6 +15,14 @@ const key=l=>l.code+'|'+l.subject;
 const cur=()=>links[LK.cur];
 const dig=s=>{const a='٠١٢٣٤٥٦٧٨٩';let o=s.replace(/٫|,/g,'.');for(let i=0;i<10;i++)o=o.split(a[i]).join(i);return o};
 const fmt=x=>x===undefined||x===null?'':String(x);
+const nrm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
+/* تقسيم الدرجات حسب المادة (يبقى بدفتر المعلم، والمجموع فقط يصل للمرشد) */
+const SCH={
+ 'التربية الإسلامية':[['الامتحان',80],['نشاط',20]],
+ 'اللغة العربية':[['قواعد',30],['تعبير',20],['إملاء',10],['خط',10],['قراءة',10],['دفتر',10],['سلوك',10]]
+};
+const ptk=(l,sid,m)=>l.code+'|'+l.subject+'|'+sid+'|'+m;
+const PT=(l,sid,m)=>(D.pt&&D.pt[ptk(l,sid,m)])||[];
 
 /* ---- التبويب ---- */
 function vLk(){
@@ -30,10 +38,33 @@ function vLk(){
  const head=`<button class="b g" onclick="lkBack()">⬅️ رجوع</button><p class="mu">${esc(l.name)} — ${esc(l.subject)}</p>`;
  if(!d)return head+empty('⏳','جاري تحميل الشعبة…');
  return head+`<div class="days">${CO.map((x,i)=>`<button class="${i===LK.m?'on':''}" onclick="lkM(${i})">${x}</button>`).join('')}</div>`
-  +(d.roster.length?d.roster.map(s=>`<div class="card"><span class="n">${esc(s.no??'')}</span><b>${esc(s.n)}</b><input type="number" inputmode="decimal" min="0" max="100" style="width:76px;margin:0;text-align:center;font-weight:700" value="${fmt((d.docs[s.id]||{})[LK.m])}" oninput="lkIn('${s.id}',this.value)"></div>`).join(''):empty('👥','لا يوجد طلاب بهذه الشعبة'));
+  +'<div id="lkst"></div>'+(setTimeout(()=>window.lkStat&&window.lkStat(),0),'')
+  +(window.sqBox?window.sqBox():'')+body(d,l)+(setTimeout(()=>window.sqFlt&&window.sqFlt(),0),'');
 }
 TABS.push(['lk','🔗','المرشد',vLk]);
 render();
+
+/* ---- جدول الدرجات (بسيط أو بتقسيم المادة) ---- */
+function body(d,l){
+ if(!d.roster.length)return empty('👥','لا يوجد طلاب بهذه الشعبة');
+ const sc=SCH[l.subject];
+ if(!sc)return d.roster.map((s,i)=>`<div class="card"><span class="n">${i+1}</span><b>${esc(s.n)}</b><input type="number" inputmode="decimal" min="0" max="100" style="width:76px;margin:0;text-align:center;font-weight:700" value="${fmt((d.docs[s.id]||{})[LK.m])}" data-sid="${s.id}" oninput="lkIn('${s.id}',this.value)"></div>`).join('');
+ return '<p class="mu">تُدخل درجات التقسيم، والمجموع فقط يصل لمرشد الصف.</p><div class="tw"><table><tr><th>الاسم الثلاثي</th>'+sc.map(([n,mx])=>`<th>${n}<br>${mx}</th>`).join('')+'<th>المجموع</th></tr>'
+  +d.roster.map((s,i)=>{
+   const p=PT(l,s.id,LK.m),f=sc.map((_,j)=>p[j]).filter(v=>v!==undefined&&v!==''),
+    tot=f.length?Math.round(f.reduce((a,b)=>a+ +b,0)*100)/100:fmt((d.docs[s.id]||{})[LK.m]);
+   return `<tr><td>${i+1}. ${esc(s.n)}</td>`+sc.map(([n,mx],j)=>`<td><input type="number" inputmode="decimal" min="0" max="${mx}" value="${fmt(p[j])}" oninput="lkPt('${s.id}',${j},this)"></td>`).join('')+`<td data-tot="${s.id}"><b>${tot}</b></td></tr>`;
+  }).join('')+'</table></div>';
+}
+window.lkPt=(sid,j,inp)=>{
+ const l=cur(),sc=SCH[l.subject],mx=sc[j][1],x=dig(inp.value.trim());
+ if(x!==''){const n=+x;if(isNaN(n)||n<0||n>mx){toast('الحد الأقصى '+mx);inp.value=fmt(PT(l,sid,LK.m)[j]);return}}
+ D.pt=D.pt||{};const k=ptk(l,sid,LK.m),p=(D.pt[k]=D.pt[k]||[]);p[j]=x;save();
+ const f=sc.map((_,i)=>p[i]).filter(v=>v!==undefined&&v!==''),
+  tot=f.length?Math.round(f.reduce((a,b)=>a+ +b,0)*100)/100:'';
+ const e=document.querySelector('[data-tot="'+sid+'"]');if(e)e.innerHTML='<b>'+tot+'</b>';
+ lkIn(sid,String(tot));
+};
 
 /* ---- حفظ الدرجات (مستند لكل طالب+مادة، والمعلم يكتب مادته فقط) ---- */
 async function put(l,sid,m,text){
@@ -52,7 +83,12 @@ async function flush(){for(const pk of Object.keys(pend)){clearTimeout(timers[pk
 addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
 
 /* ---- الواجهة ---- */
-window.lkIn=(sid,t)=>{const l=cur(),pk=key(l)+'#'+sid+'#'+LK.m;pend[pk]={l,sid,m:LK.m,t};clearTimeout(timers[pk]);timers[pk]=setTimeout(()=>run(pk),700)};
+window.lkIn=(sid,t)=>{const l=cur(),pk=key(l)+'#'+sid+'#'+LK.m;pend[pk]={l,sid,m:LK.m,t};clearTimeout(timers[pk]);timers[pk]=setTimeout(()=>run(pk),700);window.lkStat()};
+window.lkStat=()=>{
+ const e=document.getElementById('lkst');if(!e)return;
+ const all=[...document.querySelectorAll('input[data-sid],[data-tot]')],vals=all.map(i=>parseFloat(dig(i.tagName==='INPUT'?i.value:i.textContent))).filter(x=>!isNaN(x));
+ e.innerHTML=vals.length?`<div class="chips"><span>✍️ ${vals.length}/${all.length}</span><span>📊 ${(vals.reduce((p,q)=>p+q,0)/vals.length).toFixed(1)}</span><span>❌ ${vals.filter(x=>x<50).length}</span></div><p class="mu">أعلى ${Math.max(...vals)} · أدنى ${Math.min(...vals)} (أقل من 50 = راسب)</p>`:'<p class="mu">لم تُدخل درجات لهذا الشهر بعد</p>';
+};
 window.lkM=async i=>{await flush();LK.m=i;render()};
 window.lkBack=async()=>{await flush();LK.cur=null;render()};
 window.lkDel=i=>ask('إلغاء ربط هذه الشعبة؟ (درجاتك المرسلة تبقى عند المرشد)',()=>{links.splice(i,1);keep();render()});
@@ -61,7 +97,7 @@ window.lkOpen=async i=>{
  if(DATA[k])return;
  try{
   const s=await F.getDoc(F.doc(db,'sections',l.code));
-  const roster=((s.data()||{}).st||[]).slice().sort((a,b)=>(a.no||0)-(b.no||0));
+  const roster=((s.data()||{}).st||[]).slice().sort((a,b)=>nrm(a.n).localeCompare(nrm(b.n),'ar'));
   const q=await F.getDocs(F.query(F.collection(db,'sections',l.code,'grades'),F.where('sub','==',l.subject)));
   const docs={};q.forEach(x=>{const o=x.data();docs[o.sid]=o.v||{}});
   DATA[k]={roster,docs};
@@ -74,8 +110,9 @@ async function lkFetch(code){
  try{
   const s=await F.getDoc(F.doc(db,'sections',code));
   if(!s.exists())return toast('الرمز غير صحيح');
-  const d=s.data(),subs=d.sub||[];
+  const d=s.data();let subs=d.sub||[];
   if(!subs.length)return toast('المرشد لم يحدد مواد لهذه الشعبة');
+  try{const tt=await F.getDoc(F.doc(db,'teachers',(user.email||'').toLowerCase()));const only=tt.exists()?(tt.data().subjects||[]):[];if(only.length){subs=subs.filter(x=>only.includes(x));if(!subs.length)return toast('لا توجد مواد مخصصة لك بهذه الشعبة')}}catch(e){}
   const m=modal('اختر موادك',`<p class="mu">${esc(d.name||code)}</p>`+subs.map((x,i)=>`<label class="card"><input type="checkbox" data-i="${i}" style="width:22px;margin:0"><b>${esc(x)}</b></label>`).join('')+'<button class="b" id="lkok">🔗 ربط المواد المحددة</button>');
   m.querySelector('#lkok').onclick=()=>{
    let n=0;
