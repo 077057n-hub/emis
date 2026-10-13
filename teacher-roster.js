@@ -1,6 +1,6 @@
 /* teacher-roster.js — نزول صفوف المعلم من الجدول المشترك + نقل الطلاب (يُحمّل تلقائياً من teacher-link.js) */
 (()=>{
-let un=null,grades=null,st='';
+let un=null,grades=null,st='',RC=[],busy2=false;
 const norm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
 function cls(g,s){
  const k=g+'|'+s,n=g+' / '+s;
@@ -35,7 +35,7 @@ async function start(){
  }catch(e){grades=null;st='تعذر: '+(e.code||e.message);render();return}
  if(!grades.length){st='لم يخصص لك المالك صفوفاً بعد';render();return}
  un=F.onSnapshot(F.collection(db,'roster'),snap=>{
-  apply(snap.docs.map(d=>({eid:d.id,...d.data()})));
+  const L=snap.docs.map(d=>({eid:d.id,...d.data()}));RC=L.slice();apply(L);
   st='✅ صفوفك من المدرسة: '+grades.join('، ');render();
  },e=>{st='تعذرت المزامنة: '+(e.code||'');render()});
 }
@@ -44,7 +44,31 @@ function srt(){
  const a=D.st.map(x=>x.id).join(),b=D.st.slice().sort(cmp).map(x=>x.id).join();
  if(a!==b){D.st.sort(cmp);save();render()}
 }
-setInterval(srt,2500);
+async function pushLocal(){
+ const T=window.TL;
+ if(busy2||!T||!T.user||!grades||!grades.length||!un||!RC.length)return;
+ const todo=[];
+ D.st.forEach(s=>{
+  if(s.eid||!s.n)return;
+  const c=D.cl.find(x=>x.id===s.c);if(!c||!c.k)return;
+  const [g,sec]=c.k.split('|');
+  if(!grades.includes(g)||!['أ','ب'].includes(sec))return;
+  const hit=RC.find(x=>!x.del&&norm(x.n)===norm(s.n));
+  if(hit){s.eid=hit.eid;return}
+  todo.push({s,g,sec});
+ });
+ if(!todo.length)return;
+ busy2=true;
+ for(const {s,g,sec} of todo){
+  const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  try{
+   await T.F.setDoc(T.F.doc(T.db,'roster',id),{n:s.n,g,s:sec,u:Date.now(),by:T.user.email});
+   s.eid=id;
+  }catch(e){break}
+ }
+ busy2=false;save();
+}
+setInterval(()=>{srt();pushLocal()},2500);
 addEventListener('tl-user',start);
 if(window.TL&&window.TL.user)start();
 
