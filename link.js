@@ -69,7 +69,7 @@ function listen(){
  },()=>{})});
 }
 
-U.onAuthStateChanged(auth,u=>{user=u;lastLm=-1;listen();if(u)F.getDoc(F.doc(db,'users',u.uid,'data','main')).catch(e=>toast('خطأ المزامنة: '+(e.code||e.message)))});
+U.onAuthStateChanged(auth,u=>{user=u;lastLm=-1;listen();rosterListen();if(u)F.getDoc(F.doc(db,'users',u.uid,'data','main')).catch(e=>toast('خطأ المزامنة: '+(e.code||e.message)))});
 setInterval(()=>{if(!user||D.lm===lastLm)return;lastLm=D.lm;
  linked().forEach(c=>{pushSec(c).catch(()=>{});pushGr(c)})},2500);
 
@@ -142,5 +142,45 @@ window.list=function(){
  return S().filter(s=>!q||nrm(s.n).includes(q)||(s.adm||'').includes(Q.trim())).map(s=>`<div class="card"><span class="n">${s.no}</span><b>${esc(s.n)}<br><span class="mu">رقم القبول: ${esc(s.adm||'—')}</span>${s.nt?` <span class="pill wn">${esc(s.nt)}</span>`:''}</b><button class="ic s" onclick="editS('${s.id}')">✏️</button><button class="ic s" onclick="delS('${s.id}')">🗑</button></div>`).join('')||empty('👥','لا يوجد طلاب');
 };
 render();
+
+/* ---- مزامنة تلقائية لطلاب الشعب من جدول المدرسة ---- */
+let unR=null;
+function rosterListen(){
+ if(unR){unR();unR=null}
+ if(!user)return;
+ unR=F.onSnapshot(F.collection(db,'roster'),snap=>{
+  const R=snap.docs.map(d=>({eid:d.id,...d.data()}));
+  const x=syncR(R);
+  if(x.add||x.ch){save();render();if(x.add)toast('أضيف '+x.add+' طالب جديد من المدرسة 📥')}
+ },()=>{});
+}
+function syncR(R){
+ let add=0,ch=0;
+ const cmp=(a,b)=>nrm(a.n).localeCompare(nrm(b.n),'ar');
+ D.cl.forEach(c=>{
+  const mine=D.st.filter(s=>s.c===c.id);
+  const same=r=>nrm(r.g)===nrm(c.g)&&nrm(r.s)===nrm(c.s);
+  const L=R.filter(r=>!r.del&&same(r)).sort(cmp);
+  let no=Math.max(0,...mine.map(s=>s.no||0)),added=0;
+  L.forEach(r=>{
+   const s=mine.find(y=>y.eid===r.eid||y.id===r.eid)||mine.find(y=>!y.eid&&nrm(y.n)===nrm(r.n));
+   if(!s){
+    const ns={id:D.st.some(y=>y.id===r.eid)?uid():r.eid,eid:r.eid,c:c.id,n:r.n,adm:'',nt:'',no:++no};
+    D.st.push(ns);mine.push(ns);add++;added++;
+   }else if(!s.eid){s.eid=r.eid;ch++}
+  });
+  mine.forEach(s=>{
+   if(!s.eid)return;
+   const r=R.find(y=>y.eid===s.eid);
+   let note='';
+   if(!r||r.del)note='غير موجود بجدول المدرسة';
+   else if(!same(r))note='انتقل إلى '+r.g+' / '+r.s;
+   const auto=!s.nt||s.nt.startsWith('انتقل إلى ')||s.nt==='غير موجود بجدول المدرسة';
+   if(auto&&(s.nt||'')!==note){s.nt=note;ch++}
+  });
+  if(added)D.st.filter(s=>s.c===c.id).sort(cmp).forEach((s,i)=>s.no=i+1);
+ });
+ return {add,ch};
+}
 
 })();
