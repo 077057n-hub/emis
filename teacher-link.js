@@ -19,8 +19,11 @@ const nrm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ
 /* تقسيم الدرجات حسب المادة (يبقى بدفتر المعلم، والمجموع فقط يصل للمرشد) */
 const SCH={
  'التربية الإسلامية':[['الامتحان',80],['نشاط',20]],
- 'اللغة العربية':[['قواعد',30],['تعبير',20],['إملاء',10],['خط',10],['قراءة',10],['دفتر',10],['سلوك',10]]
+ 'اللغة العربية':[['قواعد',30],['تعبير',20],['إملاء',10],['خط',10],['قراءة',10],['دفتر',10],['سلوك',10]],
+ 'اللغة الإنكليزية':[['Speaking',20],['Reading',10],['Listening',10],['الامتحان',60]]
 };
+const SCHN={};Object.keys(SCH).forEach(k=>SCHN[nrm(k)]=SCH[k]);
+const schOf=sub=>{const k=nrm(sub);return SCHN[k]||(/ان[كج]ليزي/.test(k)?SCH['اللغة الإنكليزية']:undefined)};
 const ptk=(l,sid,m)=>l.code+'|'+l.subject+'|'+sid+'|'+m;
 const PT=(l,sid,m)=>(D.pt&&D.pt[ptk(l,sid,m)])||[];
 
@@ -47,7 +50,7 @@ render();
 /* ---- جدول الدرجات (بسيط أو بتقسيم المادة) ---- */
 function body(d,l){
  if(!d.roster.length)return empty('👥','لا يوجد طلاب بهذه الشعبة');
- const sc=SCH[l.subject];
+ const sc=schOf(l.subject);
  if(!sc)return d.roster.map((s,i)=>`<div class="card"><span class="n">${i+1}</span><b>${esc(s.n)}</b><input type="number" inputmode="decimal" min="0" max="100" style="width:76px;margin:0;text-align:center;font-weight:700" value="${fmt((d.docs[s.id]||{})[LK.m])}" data-sid="${s.id}" oninput="lkIn('${s.id}',this.value)"></div>`).join('');
  return '<p class="mu">تُدخل درجات التقسيم، والمجموع فقط يصل لمرشد الصف.</p><div class="tw"><table><tr><th>الاسم الثلاثي</th>'+sc.map(([n,mx])=>`<th>${n}<br>${mx}</th>`).join('')+'<th>المجموع</th></tr>'
   +d.roster.map((s,i)=>{
@@ -57,8 +60,8 @@ function body(d,l){
   }).join('')+'</table></div>';
 }
 window.lkPt=(sid,j,inp)=>{
- const l=cur(),sc=SCH[l.subject],mx=sc[j][1],x=dig(inp.value.trim());
- if(x!==''){const n=+x;if(isNaN(n)||n<0||n>mx){toast('الحد الأقصى '+mx);inp.value=fmt(PT(l,sid,LK.m)[j]);return}}
+ const l=cur(),sc=schOf(l.subject),mx=sc[j][1],x=dig(inp.value.trim());
+ if(x!==''){const n=+x;if(isNaN(n)||n<0||n>mx){inp.value=fmt(PT(l,sid,LK.m)[j]);alert('⚠️ الحد الأقصى لهذه الخانة '+mx);return}}
  D.pt=D.pt||{};const k=ptk(l,sid,LK.m),p=(D.pt[k]=D.pt[k]||[]);p[j]=x;save();
  const f=sc.map((_,i)=>p[i]).filter(v=>v!==undefined&&v!==''),
   tot=f.length?Math.round(f.reduce((a,b)=>a+ +b,0)*100)/100:'';
