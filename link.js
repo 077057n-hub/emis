@@ -183,4 +183,16 @@ function syncR(R){
  return {add,ch};
 }
 
+/* ---- تنظيف الإيميل عند الدخول (رموز مخفية من لوحة المفاتيح العربية أو النسخ) ---- */
+const clean=s=>String(s||'').replace(/[\s\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g,'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase();
+window.ca=async kind=>{
+ const e=clean($('#cem').value),p=$('#cpw').value;
+ if(!e)return toast('اكتب الإيميل');
+ try{
+  if(kind==='reset'){await cloud.reset(e);return toast('أرسلنا رابط تغيير كلمة المرور لإيميلك 📧')}
+  if(!p)return toast('اكتب كلمة المرور');
+  await cloud[kind](e,p);document.querySelectorAll('.ov').forEach(x=>x.remove());toast('تم تسجيل الدخول ✅');
+ }catch(x){toast(ERR[x.code]||'تعذر: '+(x.code||x.message))}
+};
+
 })();

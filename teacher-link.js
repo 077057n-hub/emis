@@ -14,6 +14,7 @@ const LK={cur:null,m:0},DATA={},pend={},timers={};
 const key=l=>l.code+'|'+l.subject;
 const cur=()=>links[LK.cur];
 const dig=s=>{const a='٠١٢٣٤٥٦٧٨٩';let o=s.replace(/٫|,/g,'.');for(let i=0;i<10;i++)o=o.split(a[i]).join(i);return o};
+const clean=s=>String(s||'').replace(/[\s\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g,'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase();
 const fmt=x=>x===undefined||x===null?'':String(x);
 const nrm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
 /* تقسيم الدرجات حسب المادة (يبقى بدفتر المعلم، والمجموع فقط يصل للمرشد) */
@@ -128,7 +129,7 @@ async function lkFetch(code){
 }
 window.lkLogin=()=>modal('☁️ تسجيل الدخول','<p class="mu">سجّل بإيميلك حتى تصل درجاتك لمرشد الصف.</p><input id="le" type="email" dir="ltr" placeholder="الإيميل"><input id="lp" type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف على الأقل)"><button class="b" onclick="lkAuth(0)">دخول</button><button class="b g" onclick="lkAuth(1)">إنشاء حساب جديد</button>');
 window.lkAuth=async s=>{
- const e=$('#le').value.trim(),p=$('#lp').value;if(!e||!p)return toast('اكتب الإيميل وكلمة المرور');
+ const e=clean($('#le').value),p=$('#lp').value;if(!e||!p)return toast('اكتب الإيميل وكلمة المرور');
  try{if(s)await U.createUserWithEmailAndPassword(auth,e,p);else await U.signInWithEmailAndPassword(auth,e,p);
   document.querySelectorAll('.ov').forEach(x=>x.remove());toast('تم تسجيل الدخول ✅')}
  catch(x){toast(ERR[x.code]||'تعذر: '+(x.code||''))}

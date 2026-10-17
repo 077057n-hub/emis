@@ -37,12 +37,14 @@ const auth=initializeAuth(app,{persistence:browserSessionPersistence}),db=getFir
 const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
 const GR=['الأول','الثاني','الثالث','الرابع','الخامس','السادس'],SEC=['أ','ب'];
 const $=s=>document.querySelector(s);
+const clean=s=>String(s||'').replace(/[\s\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g,'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase();
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const norm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
 const by=(a,b)=>norm(a.n).localeCompare(norm(b.n),'ar');
 const msg=t=>{const e=$('#ms');if(e)e.textContent=t};
 const ok=async f=>{try{await f()}catch(e){msg('تعذر: '+(e.code||e.message))}};
-let tab='imp',user=null,roster=null,prev=null,TC={};
+const SUBS=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','الحاسوب','اللغة الفرنسية','التربية الفنية والنشيد','التربية الرياضية'];
+let tab='imp',user=null,roster=null,prev=null,TC={},TS={};
 const loadR=async force=>{if(!roster||force)roster=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()}));return roster};
 
 function render(){
@@ -98,16 +100,16 @@ window.saveE=()=>ok(async()=>{
 /* ---- المعلمون ---- */
 async function vTc(){
  const s=await getDocs(collection(db,'teachers'));TC={};
- s.docs.forEach(d=>TC[d.id]=d.data().grades||[]);
- $('#v').innerHTML='<div class="c"><input id="te" type="email" dir="ltr" placeholder="إيميل المعلم">'+GR.map(g=>`<label class="k"><input type="checkbox" value="${g}">${g}</label>`).join('')+'<button onclick="saveT()">حفظ</button></div>'
-  +Object.entries(TC).map(([e,g])=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(e)}<br><span class="m">${esc(g.join('، '))}</span></b><button class="l" onclick="editT('${esc(e)}')">✏️</button><button class="l" onclick="delT('${esc(e)}')">🗑</button></div>`).join('');
+ s.docs.forEach(d=>{TC[d.id]=d.data().grades||[];TS[d.id]=d.data().subjects||[]});
+ $('#v').innerHTML='<div class="c"><input id="te" type="email" dir="ltr" placeholder="إيميل المعلم">'+GR.map(g=>`<label class="k gk"><input type="checkbox" value="${g}">${g}</label>`).join('')+'<p class="m">المواد (اتركها فارغة = كل المواد):</p>'+SUBS.map(x=>`<label class="k sk"><input type="checkbox" value="${x}">${x}</label>`).join('')+'<button onclick="saveT()">حفظ</button></div>'
+  +Object.entries(TC).map(([e,g])=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(e)}<br><span class="m">${esc(g.join('، '))}${(TS[e]||[]).length?' — '+esc(TS[e].join('، ')):''}</span></b><button class="l" onclick="editT('${esc(e)}')">✏️</button><button class="l" onclick="delT('${esc(e)}')">🗑</button></div>`).join('');
 }
 window.saveT=()=>ok(async()=>{
- const e=$('#te').value.trim().toLowerCase(),g=[...document.querySelectorAll('.k input:checked')].map(x=>x.value);
+ const e=clean($('#te').value),g=[...document.querySelectorAll('.gk input:checked')].map(x=>x.value),sb=[...document.querySelectorAll('.sk input:checked')].map(x=>x.value);
  if(!e||!g.length)return msg('اكتب الإيميل واختر صفاً واحداً على الأقل');
- await setDoc(doc(db,'teachers',e),{grades:g});vTc();
+ await setDoc(doc(db,'teachers',e),{grades:g,subjects:sb});vTc();
 });
-window.editT=e=>{$('#te').value=e;document.querySelectorAll('.k input').forEach(x=>x.checked=TC[e].includes(x.value))};
+window.editT=e=>{$('#te').value=e;document.querySelectorAll('.gk input').forEach(x=>x.checked=TC[e].includes(x.value));document.querySelectorAll('.sk input').forEach(x=>x.checked=(TS[e]||[]).includes(x.value))};
 window.delT=e=>{if(confirm('حذف المعلم؟'))ok(async()=>{await deleteDoc(doc(db,'teachers',e));vTc()})};
 
 /* ---- الطلاب ---- */
