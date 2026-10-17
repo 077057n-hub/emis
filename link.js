@@ -195,4 +195,17 @@ window.ca=async kind=>{
  }catch(x){toast(ERR[x.code]||'تعذر: '+(x.code||x.message))}
 };
 
+/* ---- رابط الرجوع للشاشة الرئيسية ---- */
+const addHm=()=>{
+ const hd=document.querySelector('#app header');
+ if(!hd||hd.querySelector('#hm'))return;
+ const h=document.createElement('div');
+ h.id='hm';h.textContent='🏠 الرئيسية';
+ h.style.cssText='font-size:13px;color:var(--pr);padding:0 2px 4px;cursor:pointer';
+ h.onclick=()=>{location.href='app.html'};
+ hd.insertBefore(h,hd.firstChild);
+};
+new MutationObserver(addHm).observe(document.getElementById('app'),{childList:true,subtree:true});
+addHm();
+
 })();

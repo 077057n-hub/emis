@@ -1,5 +1,6 @@
-const C='grades-v3';
+const C='grades-v4';
 const F=['./grades-record.html','./link.js','./manifest.json','./icon-192.png','./icon-512.png',
+ './app.html','./app-manifest.json','./app-icon-192.png','./app-icon-512.png',
  './teacher-app.html','./teacher-link.js','./teacher-roster.js','./teacher-cloud.js','./teacher-manifest.json','./teacher-icon-192.png','./teacher-icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>Promise.all(F.map(u=>c.add(u).catch(()=>{})))));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>إدارة المدرسة</title>
+<link rel="manifest" href="app-manifest.json">
+<meta name="theme-color" content="#1f4d43">
+<link rel="icon" href="app-icon-192.png">
+<link rel="apple-touch-icon" href="app-icon-192.png">
+<style>
+:root{--bg:#eef3f1;--card:#fff;--tx:#1d2e2b;--mu:#68807b;--pr:#1f4d43;--bd:#dce8e5}
+@media(prefers-color-scheme:dark){:root{--bg:#111a18;--card:#1a2724;--tx:#e5eeec;--mu:#8ea49f;--pr:#5cc4b5;--bd:#2a3b37}}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:Tajawal,"Segoe UI",Tahoma,Arial,sans-serif;padding:calc(28px + env(safe-area-inset-top,0px)) 18px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center}
+.logo{width:84px;height:84px;border-radius:22px;margin-bottom:12px}
+h1{font-size:24px;margin-bottom:4px}
+p.s{color:var(--mu);font-size:14px;margin-bottom:26px}
+.g{width:100%;max-width:420px;display:grid;gap:14px}
+a.c{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:20px 18px;text-decoration:none;color:var(--tx);box-shadow:0 2px 8px #0001}
+a.c:active{transform:scale(.98)}
+.e{font-size:38px;line-height:1}
+.c b{display:block;font-size:19px;margin-bottom:3px}
+.c span{color:var(--mu);font-size:13px}
+.f{margin-top:26px;color:var(--mu);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<img class="logo" src="app-icon-192.png" alt="">
+<h1>إدارة المدرسة</h1>
+<p class="s">اختر التطبيق الذي تريده</p>
+<div class="g">
+ <a class="c" href="teacher-app.html"><span class="e">👨‍🏫</span><div><b>دفتر المعلم</b><span>الطلاب والحضور والدرجات والسلوك والجدول</span></div></a>
+ <a class="c" href="grades-record.html"><span class="e">📝</span><div><b>سجل الدرجات</b><span>لمرشد الصف: السجل النهائي والنواقص والطباعة</span></div></a>
+</div>
+<p class="f">تسجيل الدخول واحد للتطبيقين</p>
+<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script>
+</body>
+</html>

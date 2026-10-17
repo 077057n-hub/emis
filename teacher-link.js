@@ -127,9 +127,16 @@ async function lkFetch(code){
    keep();m.remove();render();toast('تم ربط '+n+' ✅')};
  }catch(e){toast('تعذر: '+(e.code||e.message||'خطأ'))}
 }
-window.lkLogin=()=>modal('☁️ تسجيل الدخول','<p class="mu">سجّل بإيميلك حتى تصل درجاتك لمرشد الصف.</p><input id="le" type="email" dir="ltr" placeholder="الإيميل"><input id="lp" type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف على الأقل)"><button class="b" onclick="lkAuth(0)">دخول</button><button class="b g" onclick="lkAuth(1)">إنشاء حساب جديد</button>');
+window.lkLogin=()=>modal('☁️ تسجيل الدخول','<p class="mu">سجّل بإيميلك حتى تصل درجاتك لمرشد الصف.</p><input id="le" type="email" dir="ltr" placeholder="الإيميل"><input id="lp" type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف على الأقل)"><button class="b" onclick="lkAuth(0)">دخول</button><button class="b g" onclick="lkAuth(1)">إنشاء حساب جديد</button><button class="b g" onclick="lkAuth(2)">نسيت كلمة المرور</button>');
 window.lkAuth=async s=>{
- const e=clean($('#le').value),p=$('#lp').value;if(!e||!p)return toast('اكتب الإيميل وكلمة المرور');
+ const e=clean($('#le').value),p=$('#lp').value;
+ if(s===2){
+  if(!e)return toast('اكتب الإيميل أولاً');
+  try{await U.sendPasswordResetEmail(auth,e);toast('أرسلنا رابط تغيير كلمة المرور لإيميلك 📧')}
+  catch(x){toast(ERR[x.code]||'تعذر: '+(x.code||''))}
+  return;
+ }
+ if(!e||!p)return toast('اكتب الإيميل وكلمة المرور');
  try{if(s)await U.createUserWithEmailAndPassword(auth,e,p);else await U.signInWithEmailAndPassword(auth,e,p);
   document.querySelectorAll('.ov').forEach(x=>x.remove());toast('تم تسجيل الدخول ✅')}
  catch(x){toast(ERR[x.code]||'تعذر: '+(x.code||''))}
@@ -145,4 +152,17 @@ try{
  try{db=F.initializeFirestore(app,{localCache:F.persistentLocalCache()})}catch(e){db=F.getFirestore(app)}
  U.onAuthStateChanged(auth,u=>{user=u;ready=true;render();window.TL={F,db,auth,user:u};dispatchEvent(new Event('tl-user'))});
 }catch(e){fail=true;ready=false;render()}
+/* ---- رابط الرجوع للشاشة الرئيسية ---- */
+const addHm=()=>{
+ const hd=document.querySelector('#app header');
+ if(!hd||hd.querySelector('#hm'))return;
+ const h=document.createElement('div');
+ h.id='hm';h.textContent='🏠 الرئيسية';
+ h.style.cssText='font-size:13px;color:var(--pr);padding:0 2px 4px;cursor:pointer';
+ h.onclick=()=>{location.href='app.html'};
+ hd.insertBefore(h,hd.firstChild);
+};
+new MutationObserver(addHm).observe(document.getElementById('app'),{childList:true,subtree:true});
+addHm();
+
 })();
