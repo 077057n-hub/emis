@@ -4,457 +4,47 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>استمارة إضافة الطالب — الإيمس</title>
-<!-- استدعاء خط القاهرة العصري ومكتبة الأيقونات -->
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
 <style>
-:root {
-  --bg-deep: #060b14;
-  --glass-bg: rgba(18, 28, 46, 0.72);
-  --glass-card: rgba(15, 23, 42, 0.65);
-  --glass-border: rgba(56, 189, 248, 0.18);
-  --neon-emerald: #10b981;
-  --neon-cyan: #06b6d4;
-  --neon-blue: #3b82f6;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --rd: #f43f5e;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background-color: var(--bg-deep);
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.20) 0%, transparent 45%),
-    radial-gradient(circle at 10% 50%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 90% 90%, rgba(59, 130, 246, 0.14) 0%, transparent 45%);
-  background-attachment: fixed;
-  font-family: 'Cairo', Tahoma, sans-serif;
-  color: var(--text-main);
-  line-height: 1.6;
-  min-height: 100vh;
-}
-
-.wrap {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px 16px 50px;
-}
-
-/* الهيدر والشعار المتوهج */
-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
-  margin: 15px 0 30px;
-  padding: 24px 18px;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.1);
-}
-
-.hero-icon {
-  width: 78px;
-  height: 78px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(6, 182, 212, 0.18));
-  border: 1px solid rgba(16, 185, 129, 0.45);
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.35), inset 0 0 15px rgba(6, 182, 212, 0.25);
-  color: var(--neon-emerald);
-  font-size: 36px;
-}
-
-header h1 {
-  font-size: 22px;
-  font-weight: 800;
-  margin: 0;
-  background: linear-gradient(90deg, #ffffff, #a7f3d0, #67e8f9);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
-}
-
-header small {
-  display: block;
-  color: var(--text-muted);
-  font-size: 14px;
-  margin-top: 4px;
-}
-
-/* عناوين الأقسام */
-h2 {
-  margin: 28px 0 12px;
-  padding: 12px 18px;
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.18) 0%, rgba(15, 23, 42, 0.6) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  border-right: 4px solid var(--neon-emerald);
-  border-radius: 16px;
-  font-size: 17px;
-  font-weight: 700;
-  color: #ecfdf5;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-h2 i {
-  color: var(--neon-emerald);
-  font-size: 19px;
-  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6));
-}
-
-/* شبكة الحقول الزجاجية */
-.grid {
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 22px;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  box-shadow: 0 12px 32px -5px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.08);
-}
-
-.f {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
-  background: var(--glass-card);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  transition: all 0.25s ease;
-}
-
-.f:focus-within {
-  border-color: rgba(16, 185, 129, 0.5);
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
-  transform: translateY(-2px);
-}
-
-.f span {
-  font-size: 14px;
-  font-weight: 700;
-  color: #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.f b {
-  color: var(--rd);
-  margin-inline-start: 4px;
-  font-size: 16px;
-  text-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
-}
-
-/* حقول الإدخال والقوائم */
-input, select {
-  font: inherit;
-  font-size: 15px;
-  padding: 10px 14px;
-  border: 1.5px solid rgba(56, 189, 248, 0.2);
-  border-radius: 12px;
-  background: rgba(9, 14, 23, 0.85);
-  color: #ffffff;
-  width: 100%;
-  transition: all 0.25s ease;
-}
-
-select option {
-  background: #0f172a;
-  color: #fff;
-}
-
-input:focus, select:focus {
-  outline: none;
-  border-color: var(--neon-emerald);
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
-  background: rgba(9, 14, 23, 1);
-}
-
-/* تنسيق خاص لحقول رفع الصور */
-input[type=file] {
-  padding: 8px;
-  background: rgba(16, 185, 129, 0.06);
-  border: 1.5px dashed rgba(16, 185, 129, 0.4);
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-input[type=file]::file-selector-button {
-  font-family: 'Cairo', sans-serif;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--neon-emerald), var(--neon-cyan));
-  color: #fff;
-  border: 0;
-  padding: 6px 14px;
-  border-radius: 8px;
-  margin-left: 12px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-  transition: 0.2s;
-}
-
-input[type=file]::file-selector-button:hover {
-  filter: brightness(1.1);
-}
-
-.hp {
-  display: none;
-}
-
-/* صندوق الملاحظات */
-.notes {
-  margin: 24px 0;
-  padding: 18px 22px;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: 18px;
-  font-size: 14px;
-  color: #fde68a;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-.notes b {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  color: #fbbf24;
-  margin-bottom: 6px;
-}
-
-.notes ol {
-  margin: 6px 0 0;
-  padding-inline-start: 22px;
-  color: #cbd5e1;
-}
-
-/* الأزرار */
-button {
-  font: inherit;
-  cursor: pointer;
-  border: 0;
-  border-radius: 16px;
-  padding: 14px 28px;
-  background: linear-gradient(135deg, var(--neon-emerald) 0%, var(--neon-cyan) 100%);
-  color: #fff;
-  font-weight: 800;
-  font-size: 16px;
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-#sb {
-  width: 100%;
-  padding: 16px;
-  font-size: 18px;
-  letter-spacing: 0.5px;
-}
-
-button:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.55), 0 0 15px rgba(6, 182, 212, 0.4);
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-button.l {
-  background: rgba(30, 41, 59, 0.8);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  padding: 8px 16px;
-  font-size: 14px;
-  box-shadow: none;
-}
-
-button.l:hover {
-  background: rgba(56, 189, 248, 0.15);
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
-}
-
-/* الرسائل والتنبيهات */
-.msg {
-  margin: 16px 0;
-  padding: 14px 18px;
-  border-radius: 14px;
-  display: none;
-  font-weight: 600;
-}
-
-.msg.e {
-  display: block;
-  background: rgba(244, 63, 94, 0.15);
-  border: 1px solid rgba(244, 63, 94, 0.4);
-  color: #fda4af;
-}
-
-.msg.i {
-  display: block;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #6ee7b7;
-}
-
-/* شاشة النجاح */
-.done {
-  text-align: center;
-  padding: 50px 20px;
-  display: none;
-  background: var(--glass-bg);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  border-radius: 24px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.2);
-}
-
-.done h2 {
-  background: none;
-  border: 0;
-  color: var(--neon-emerald);
-  font-size: 26px;
-  justify-content: center;
-  box-shadow: none;
-}
-
-.done p {
-  color: var(--text-muted);
-  font-size: 16px;
-  margin-bottom: 24px;
-}
-
-/* نافذة عرض الصور المنبثقة */
-#mdl {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 8, 15, 0.88);
-  backdrop-filter: blur(12px);
-  overflow: auto;
-  padding: 24px 14px;
-  z-index: 99;
-}
-
-#mb {
-  max-width: 660px;
-  margin: 0 auto;
-  color: #fff;
-  text-align: center;
-}
-
-#mb div {
-  font-weight: 700;
-  color: var(--neon-emerald);
-  margin-top: 12px;
-  font-size: 16px;
-}
-
-#mb img {
-  max-width: 100%;
-  display: block;
-  margin: 8px auto 22px;
-  background: #0f172a;
-  border-radius: 16px;
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-}
-
-@media(min-width: 700px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* لوحة الإدارة (#admin) */
-#adm {
-  display: none;
-}
-
-.bar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin: 16px 0;
-  padding: 16px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 18px;
-}
-
-.bar input {
-  max-width: 280px;
-}
-
-.tw {
-  overflow: auto;
-  max-height: 72vh;
-  border: 1px solid var(--glass-border);
-  background: rgba(10, 16, 28, 0.9);
-  border-radius: 18px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-}
-
-table {
-  border-collapse: collapse;
-  font-size: 13px;
-  white-space: nowrap;
-  width: 100%;
-}
-
-th, td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 10px 12px;
-  text-align: right;
-}
-
-th {
-  background: #131f33;
-  color: #38bdf8;
-  font-weight: 700;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-tr:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-tr.ok {
-  background: rgba(16, 185, 129, 0.14);
-}
+:root{--g:#1f4d43;--ln:#2b2b2b;--bg:#f3f1ea;--rd:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Tahoma,'Segoe UI',Arial,sans-serif;color:#1b1b1b;line-height:1.6}
+.wrap{width:100%;max-width:860px;margin:0 auto;padding:14px}
+header{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+header h1{font-size:20px;margin:0;color:var(--g)}
+header small{display:block;color:#555;font-size:13px}
+h2{margin:18px 0 0;padding:8px 12px;background:#e4e2d8;border:1.5px solid var(--ln);border-bottom:0;font-size:16px}
+.grid{border:1.5px solid var(--ln);background:#fff;display:grid;grid-template-columns:minmax(0,1fr)}
+.f{min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-top:1px solid #cfcfc6}
+.f:first-child{border-top:0}
+.f span{font-size:14px;font-weight:600}
+.f b{color:var(--rd);margin-inline-start:3px}
+input,select{font:inherit;font-size:16px;padding:8px 10px;border:1px solid #b9b9b0;border-radius:6px;background:#fff;width:100%}
+input:focus,select:focus{outline:2px solid var(--g);outline-offset:1px}
+.hp{display:none}
+.notes{margin:18px 0;font-size:14px;color:#444}
+.notes ol{margin:4px 0;padding-inline-start:22px}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:12px 22px;background:var(--g);color:#fff;font-weight:700}
+button.l{background:#fff;color:var(--g);border:1px solid var(--g);padding:7px 14px}
+.msg{margin:12px 0;padding:10px 12px;border-radius:8px;display:none}
+.msg.e{display:block;background:#fbe9e7;color:var(--rd)}
+.done{text-align:center;padding:40px 10px;display:none}
+.done h2{background:none;border:0;color:var(--g);font-size:22px}
+.msg.i{display:block;background:#e7f2ea;color:var(--g)}
+.fh{font-size:12px;color:#666;font-weight:400}
+#mdl{display:none;position:fixed;inset:0;background:#000c;overflow:auto;padding:14px;z-index:9}
+#mb{max-width:640px;margin:0 auto;color:#fff;text-align:center}
+#mb img{max-width:100%;display:block;margin:6px auto 14px;background:#fff;border-radius:6px}
+input[type=file]{padding:6px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.f{border-top:0;border-bottom:1px solid #cfcfc6}.f:nth-child(odd){border-inline-start:1px solid #cfcfc6}}
+/* admin */
+#adm{display:none}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.bar input{max-width:260px}
+.tw{overflow:auto;max-height:70vh;border:1px solid #bbb;background:#fff}
+table{border-collapse:collapse;font-size:13px;white-space:nowrap}
+th,td{border:1px solid #ddd;padding:5px 8px}
+th{background:#e4e2d8;position:sticky;top:0}
+tr.ok{background:#e7f2ea}
 </style>
 </head>
 <body>
@@ -462,60 +52,31 @@ tr.ok {
 
 <section id="pub">
  <header>
-  <div class="hero-icon">
-    <i class="fa-solid fa-shield-halved"></i>
-  </div>
-  <div>
-    <h1>استمارة إضافة الطالب لنظام إدارة المعلومات التربوية (EMIS)</h1>
-    <small>يرجى ملء البيانات بدقة والتأكد من مطابقتها للمستمسكات الرسمية</small>
+  <div><h1>استمارة إضافة الطالب لنظام إدارة المعلومات التربوية (EMIS)</h1>
   </div>
  </header>
  <form id="fm" novalidate></form>
- <div class="done" id="done">
-  <h2><i class="fa-solid fa-circle-check"></i> تم استلام الاستمارة بنجاح</h2>
-  <p>شكراً لك. سيتم تسجيل بيانات الطالب في النظام. لا حاجة لإرسالها مرة ثانية.</p>
-  <button class="l" onclick="location.reload()"><i class="fa-solid fa-user-plus"></i> تسجيل طالب آخر</button>
- </div>
+ <div class="done" id="done"><h2>تم استلام الاستمارة ✔</h2><p>شكراً لك. سيتم تسجيل بيانات الطالب في النظام. لا حاجة لإرسالها مرة ثانية.</p><button class="l" onclick="location.reload()">تسجيل طالب آخر</button></div>
 </section>
 
 <section id="adm">
- <header>
-  <div class="hero-icon"><i class="fa-solid fa-chart-pie"></i></div>
-  <div><h1>لوحة الإدارة — سجل الردود</h1></div>
- </header>
- <div id="login" class="bar">
-  <input id="pw" type="password" placeholder="أدخل كلمة المرور للإدارة">
-  <button onclick="login()"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
- </div>
+ <header><h1>لوحة الإدارة — الردود</h1></header>
+ <div id="login" class="bar"><input id="pw" type="password" placeholder="كلمة السر"><button onclick="login()">دخول</button></div>
  <div id="lmsg" class="msg"></div>
  <div id="data" style="display:none">
-  <div class="bar">
-   <input id="q" placeholder="🔍 بحث بالاسم أو الرقم أو الصف">
-   <button class="l" onclick="csv()"><i class="fa-solid fa-file-csv"></i> تنزيل Excel (CSV)</button>
-   <span id="cnt" style="color:var(--neon-emerald);font-weight:700;margin-right:auto"></span>
-  </div>
+  <div class="bar"><input id="q" placeholder="بحث بالاسم أو الرقم أو الصف"><button class="l" onclick="csv()">تنزيل Excel (CSV)</button><span id="cnt"></span></div>
   <div class="tw"><table id="tb"></table></div>
  </div>
 </section>
 
 <div id="mdl" onclick="this.style.display='none'"><div id="mb"></div></div>
 </div>
-
 <script>
 const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
 const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
 const GR=['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي'];
-
-// أيقونات الأقسام لإعطاء مظهر عصري
-const SEC_ICONS={
-  'وثائق التعريف':'fa-id-card',
-  'المعلومات الشخصية وبيانات الطالب':'fa-user-graduate',
-  'تُملأ في حال كان للطالب هوية الأحوال المدنية':'fa-passport',
-  'صور المستمسكات (اختياري — صورة واضحة من الهاتف)':'fa-camera-retro'
-};
-
-// [key,label,type(t/d/n/p/s),required,options] — عنصر بطول 1 = عنوان قسم
+// [key,label,type(t/d/n/p/s),required,options]  — عنصر بطول 1 = عنوان قسم
 const F=[
 ['وثائق التعريف'],
 ['full_name','الاسم','t',1],['father_name','اسم الأب','t',1],['grandfather_name','اسم والد الأب','t',1],['great_grandfather_name','اسم جد الأب','t'],['surname','اللقب','t'],
@@ -549,27 +110,20 @@ function shrink(file){return new Promise((ok,no)=>{const img=new Image(),u=URL.c
   img.onload=()=>{const sc=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement('canvas');
   c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.72))};img.onerror=no;img.src=u})}
-
 /* ---------- نموذج الطلاب ---------- */
 (function build(){
   let h='',open=false;
   F.forEach(f=>{
-    if(f.length===1){
-      if(open)h+='</div>';
-      const ic=SEC_ICONS[f[0]]||'fa-layer-group';
-      h+=`<h2><i class="fa-solid ${ic}"></i> ${f[0]}</h2><div class="grid">`;
-      open=true;
-      return;
-    }
+    if(f.length===1){if(open)h+='</div>';h+=`<h2>${f[0]}</h2><div class="grid">`;open=true;return}
     const [k,l,t,r,o]=f,rq=r?' required':'';
     const inp=t==='f'?`<input name="f_${k}" type="file" accept="image/*">`:t==='s'
-      ?`<select name="${k}"${rq}><option value="">اختر...</option>${o.map(x=>`<option>${x}</option>`).join('')}</select>`
+      ?`<select name="${k}"${rq}><option value="">اختر</option>${o.map(x=>`<option>${x}</option>`).join('')}</select>`
       :`<input name="${k}"${rq} type="${t==='d'?'date':t==='p'?'tel':'text'}"${t==='n'||t==='p'?' inputmode="numeric"':''} autocomplete="off">`;
     h+=`<label class="f"><span>${l}${r?'<b>*</b>':''}</span>${inp}</label>`;
   });
   h+=`</div><input class="hp" name="website" tabindex="-1" autocomplete="off">
-  <div class="notes"><b><i class="fa-solid fa-triangle-exclamation"></i> ملاحظات هامة</b><ol><li>يجب كتابة المعلومات بدقة وبخط واضح.</li><li>المعلومات المحددة بنجمة (*) يجب كتابتها.</li><li>إرفاق نسخة من مستمسكات الطالب (البطاقة الوطنية، بطاقة السكن).</li></ol></div>
-  <div class="msg" id="err"></div><button id="sb" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال الاستمارة</button>`;
+  <div class="notes"><b>ملاحظات</b><ol><li>يجب كتابة المعلومات بدقة وبخط واضح.</li><li>المعلومات المحددة بنجمة يجب كتابتها.</li><li>ارفاق نسخة من مستمسكات الطالب (البطاقة الوطنية، بطاقة السكن).</li></ol></div>
+  <div class="msg" id="err"></div><button id="sb" type="submit">إرسال الاستمارة</button>`;
   $('#fm').innerHTML=h;
 })();
 
@@ -618,10 +172,10 @@ async function login(){
 const fields=F.filter(f=>f.length>1&&f[2]!=='f');
 function draw(){
   const q=$('#q').value.trim(),v=rows.filter(r=>!q||Object.values(r).join(' ').includes(q));
-  $('#cnt').textContent=`العدد: ${v.length} من ${rows.length}`;
+  $('#cnt').textContent=`${v.length} من ${rows.length}`;
   const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   $('#tb').innerHTML='<tr><th>أُدخل بالإيمس</th><th>الصور</th>'+fields.map(f=>`<th>${f[1]}</th>`).join('')+'<th>وقت الإرسال</th></tr>'+
-   v.map(r=>`<tr class="${r.entered?'ok':''}"><td><input type="checkbox" style="width:18px;height:18px;accent-color:#10b981" ${r.entered?'checked':''} onchange="mark(${r.id},this.checked)"></td><td>${r.client_id?`<button class="l" onclick="imgs('${r.client_id}')"><i class="fa-regular fa-images"></i> عرض</button>`:''}</td>`+
+   v.map(r=>`<tr class="${r.entered?'ok':''}"><td><input type="checkbox" style="width:auto" ${r.entered?'checked':''} onchange="mark(${r.id},this.checked)"></td><td>${r.client_id?`<button class="l" onclick="imgs('${r.client_id}')">عرض</button>`:''}</td>`+
    fields.map(f=>`<td>${esc(r[f[0]])}</td>`).join('')+`<td>${esc(r.created_at.slice(0,16).replace('T',' '))}</td></tr>`).join('');
 }
 $('#q').oninput=draw;
