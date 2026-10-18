@@ -32,8 +32,17 @@ a.c:active{transform:scale(.98)}
 <div class="g">
  <a class="c" href="teacher-app.html"><span class="e">👨‍🏫</span><div><b>دفتر المعلم</b><span>الطلاب والحضور والدرجات والسلوك والجدول</span></div></a>
  <a class="c" href="grades-record.html"><span class="e">📝</span><div><b>سجل الدرجات</b><span>لمرشد الصف: السجل النهائي والنواقص والطباعة</span></div></a>
+ <a class="c" id="adm" href="admin.html" style="display:none"><span class="e">⚙️</span><div><b>إدارة المدرسة</b><span>استيراد الطلاب وتخصيص المعلمين (للمالك فقط)</span></div></a>
 </div>
 <p class="f">تسجيل الدخول واحد للتطبيقين</p>
+<script type="module">
+import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+try{
+ const app=getApps().length?getApp():initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
+ onAuthStateChanged(getAuth(app),u=>{if(u&&(u.email||'').toLowerCase()==='077057n@gmail.com')document.getElementById('adm').style.display='flex'});
+}catch(e){}
+</script>
 <script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script>
 </body>
 </html>

@@ -208,4 +208,46 @@ const addHm=()=>{
 new MutationObserver(addHm).observe(document.getElementById('app'),{childList:true,subtree:true});
 addHm();
 
+/* ---- أسماء المرشد والمدير بورقة الطباعة ---- */
+const NK='sj_names';
+const NM=()=>{try{return JSON.parse(localStorage.getItem(NK)||'{}')}catch(e){return{}}};
+const pp0=window.paperHTML;
+window.paperHTML=(s,yr)=>{
+ const n=NM(),a=[esc(n.g||''),esc(n.p||'')];let i=0;
+ return pp0(s,yr).replace(/<div class="bv w"><\/div>/g,()=>`<div class="bv w">${a[i++]||''}</div>`);
+};
+const sh0=window.sheetHTML;
+window.sheetHTML=(s,yr,p)=>{const n=NM();return sh0(s,yr,p).replace('مرشد الصف:</td>','مرشد الصف: '+esc(n.g||'')+'</td>').replace('المدير:</td>','المدير: '+esc(n.p||'')+'</td>')};
+const ex0=window.exp;
+window.exp=function(){
+ ex0();
+ const y=document.querySelector('.ov #yr');if(!y)return;
+ const n=NM();
+ y.insertAdjacentHTML('afterend',`<p class="mu">اسم مرشد الصف (يُطبع بالورقة)</p><input id="ng" value="${esc(n.g||'')}"><p class="mu">اسم المدير (يُطبع بالورقة)</p><input id="np" value="${esc(n.p||'')}">`);
+ const sv=()=>{try{localStorage.setItem(NK,JSON.stringify({g:document.getElementById('ng').value.trim(),p:document.getElementById('np').value.trim()}))}catch(e){}};
+ document.getElementById('ng').oninput=sv;document.getElementById('np').oninput=sv;
+};
+
+/* ---- بحث بالاسم أو رقم القبول بتبويبات الإدخال والسجل والنتائج ---- */
+let SQ='';
+const qn=()=>nrm(SQ).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const hay=s=>nrm(s.n)+' '+(s.adm||'')+' '+(s.no||'');
+const flt=()=>{
+ const q=qn(),L=S(),cards=[...document.querySelectorAll('main .card')];
+ const byIdx=cards.length===L.length;
+ cards.forEach((c,i)=>{const t=byIdx?hay(L[i]):nrm(c.textContent);c.style.display=!q||t.includes(q)?'':'none'});
+};
+const shFind=()=>{
+ const q=qn();if(!q)return;
+ const s=S().find(x=>hay(x).includes(q));
+ if(s&&s.id!==SH){SH=s.id;render();setTimeout(()=>{const e=document.getElementById('sq');if(e){e.focus();const n=e.value.length;e.setSelectionRange(n,n)}},0)}
+};
+window.sqSet=v=>{SQ=v;if(tab==='sh')shFind();else flt()};
+const sbox=()=>`<input id="sq" placeholder="🔍 بحث بالاسم أو رقم القبول" value="${esc(SQ)}" oninput="sqSet(this.value)">`;
+['in','rs','sh'].forEach(k=>{
+ const t=TABS.find(x=>x[0]===k);if(!t)return;
+ const f=t[3];
+ t[3]=()=>sbox()+f()+(k==='sh'?'':(setTimeout(flt,0),''));
+});
+
 })();
