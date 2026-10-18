@@ -23,6 +23,11 @@ button.l{background:#fff;color:var(--g);border:1px solid var(--g)}
 .m{color:#666;font-size:13px}
 label.k{display:inline-flex;gap:4px;align-items:center;margin:4px 0 4px 10px}
 label.k input{width:auto;margin:0}
+table{border-collapse:collapse;font-size:13px;white-space:nowrap}
+th,td{border:1px solid #ddd;padding:5px 8px;text-align:center}
+th{background:#e4e2d8}
+.tw{overflow:auto;background:#fff;border:1px solid #ddd;border-radius:8px;margin:8px 0}
+td.f{color:#d23f37;font-weight:700}
 </style>
 </head>
 <body>
@@ -30,8 +35,8 @@ label.k input{width:auto;margin:0}
 <div id="app"></div>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import {initializeAuth,browserSessionPersistence,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {getFirestore,collection,doc,getDocs,setDoc,updateDoc,deleteDoc,addDoc,writeBatch,query,orderBy,limit} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {initializeAuth,browserSessionPersistence,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {getFirestore,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,addDoc,writeBatch,query,orderBy,limit} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const app=initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
 const auth=initializeAuth(app,{persistence:browserSessionPersistence}),db=getFirestore(app);
 const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
@@ -47,18 +52,35 @@ const SUBS=['التربية الإسلامية','اللغة العربية','ا�
 let tab='imp',user=null,roster=null,prev=null,TC={},TS={};
 const loadR=async force=>{if(!roster||force)roster=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()}));return roster};
 
+let role=null;
+const TA=[['imp','استيراد'],['tc','المعلمون'],['st','الطلاب'],['lg','النقل'],['gr','الدرجات'],['vw','المعاونون']],TV=[['gr','الدرجات']];
 function render(){
  const A=$('#app');
- if(!user){A.innerHTML='<div class="c"><input id="em" type="email" dir="ltr" placeholder="الإيميل"><input id="pw" type="password" dir="ltr" placeholder="كلمة المرور"><button onclick="lg()">دخول</button></div><p class="m" id="ms"></p>';return}
- A.innerHTML=`<p class="m">${esc(user.email)} — <a href="#" onclick="out();return false">خروج</a></p><div class="t">${[['imp','استيراد'],['tc','المعلمون'],['st','الطلاب'],['lg','النقل']].map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</div><div id="v"></div><p class="m" id="ms"></p>`;
- ({imp:vImp,tc:vTc,st:vSt,lg:vLg})[tab]();
+ if(!user){A.innerHTML='<div class="c"><input id="em" type="email" dir="ltr" placeholder="الإيميل"><input id="pw" type="password" dir="ltr" placeholder="كلمة المرور"><button onclick="lg()">دخول</button><button class="l" onclick="su()">إنشاء حساب جديد</button></div><p class="m" id="ms"></p>';return}
+ if(role===null){A.innerHTML=`<p class="m">${esc(user.email)} — جاري التحقق من الصلاحية…</p>`;return}
+ if(role==='none'){A.innerHTML=`<p class="m">${esc(user.email)} — <a href="#" onclick="out();return false">خروج</a></p><div class="c"><p style="color:#b3261e">⚠️ هذا الحساب غير مخوّل. سجّل دخول بإيميل المالك أو المعاون.</p></div>`;return}
+ const T=role==='admin'?TA:TV;
+ if(!T.some(x=>x[0]===tab))tab=T[0][0];
+ A.innerHTML=`<p class="m">${esc(user.email)} (${role==='admin'?'المالك':'معاون'}) — <a href="#" onclick="out();return false">خروج</a></p><div class="t" style="flex-wrap:wrap">${T.map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</div><div id="v"></div><p class="m" id="ms"></p>`;
+ ({imp:vImp,tc:vTc,st:vSt,lg:vLg,gr:vGr,vw:vVw})[tab]();
 }
 Object.assign(window,{
  go:k=>{tab=k;render()},
  out:()=>signOut(auth),
- lg:()=>ok(()=>signInWithEmailAndPassword(auth,$('#em').value.trim(),$('#pw').value))
+ lg:()=>ok(()=>signInWithEmailAndPassword(auth,clean($('#em').value),$('#pw').value)),
+ su:()=>ok(()=>createUserWithEmailAndPassword(auth,clean($('#em').value),$('#pw').value))
 });
-onAuthStateChanged(auth,u=>{user=u;render();if(u)getDocs(query(collection(db,'teachers'),limit(1))).catch(e=>{if(e.code==='permission-denied'){const m=$('#ms');if(m){m.style.color='#b3261e';m.textContent='⚠️ هذا الحساب ليس مالكاً، سجّل دخول بإيميل المالك (077057n@gmail.com)'}}})});
+onAuthStateChanged(auth,u=>{
+ user=u;role=null;SECS=null;SC=null;render();
+ if(!u)return;
+ (async()=>{
+  try{await getDocs(query(collection(db,'teachers'),limit(1)));role='admin'}
+  catch(e){
+   try{const v=await getDoc(doc(db,'viewers',(u.email||'').toLowerCase()));role=v.exists()?'viewer':'none'}catch(x){role='none'}
+  }
+  render();
+ })();
+});
 
 /* ---- استيراد من الإيمس ---- */
 function vImp(){
@@ -145,6 +167,63 @@ window.undo=(id,eid,from)=>ok(async()=>{
  await updateDoc(doc(db,'roster',eid),{s:from,u:Date.now()});
  await updateDoc(doc(db,'moves',id),{undone:true});roster=null;vLg();
 });
+
+/* ---- المعاونون (يشاهدون الدرجات فقط) ---- */
+async function vVw(){
+ const s=await getDocs(collection(db,'viewers'));
+ $('#v').innerHTML='<div class="c"><p class="m">المعاون يشوف سجلات الدرجات فقط بدون تعديل. لازم يسوي حساباً بإيميله من زر «إنشاء حساب جديد» بهذي الصفحة.</p><input id="ve" type="email" dir="ltr" placeholder="إيميل المعاون"><button onclick="saveV()">إضافة</button></div>'
+  +s.docs.map(d=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(d.id)}</b><button class="l" onclick="delV('${esc(d.id)}')">🗑</button></div>`).join('');
+}
+window.saveV=()=>ok(async()=>{const e=clean($('#ve').value);if(!e)return msg('اكتب الإيميل');await setDoc(doc(db,'viewers',e),{at:Date.now()});vVw()});
+window.delV=e=>{if(confirm('حذف المعاون؟'))ok(async()=>{await deleteDoc(doc(db,'viewers',e));vVw()})};
+
+/* ---- سجلات الدرجات لكل الشعب ---- */
+const CO=['تشرين 1','تشرين 2','كانون 1','كانون 2','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];
+let SECS=null,SC=null,GM=0,GRD={};
+const nm=x=>x===undefined||x===null||x===''||isNaN(+x)?null:+x;
+const mean=a=>{a=a.filter(x=>x!==null);return a.length?Math.round(a.reduce((p,q)=>p+q,0)/a.length):null};
+function calc(sid,sb){
+ const g=Array.from({length:11},(_,i)=>nm((GRD[sid+'|'+sb]||{})[i]));
+ const a1=mean([g[0],g[1],g[2],g[3]]),a2=mean([g[5],g[6],g[7],g[8]]),annual=mean([a1,g[4],a2]),fe=g[9];
+ const fin=annual!==null&&fe!==null?Math.round((annual+fe)/2):null,sec=g[10];
+ return {g,a1,a2,annual,fe,fin,eff:sec!==null?sec:fin};
+}
+async function vGr(){
+ if(!SECS)SECS=(await getDocs(collection(db,'sections'))).docs.map(d=>({code:d.id,...d.data()}));
+ if(SC)return vSec();
+ SECS.sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar'));
+ $('#v').innerHTML=`<p class="m">${SECS.length} شعبة مربوطة بسجل الدرجات</p>`
+  +(SECS.length?SECS.map(s=>`<div class="r" onclick="openSec('${s.code}')" style="cursor:pointer"><b>${esc(s.name||s.code)}<br><span class="m">${(s.st||[]).length} طالب — ${(s.sub||[]).length} مادة</span></b><button class="l">فتح</button></div>`).join(''):'<p class="m">لا توجد شعب مربوطة بعد. المرشد يضغط 🔗 بسجل الدرجات لربط شعبته.</p>')
+  +'<button class="l" onclick="reloadSec()">🔄 تحديث</button>';
+}
+window.reloadSec=()=>{SECS=null;SC=null;vGr()};
+window.backSec=()=>{SC=null;vGr()};
+window.setGM=i=>{GM=i;vSec()};
+window.openSec=code=>ok(async()=>{
+ SC=SECS.find(s=>s.code===code);GM=0;GRD={};
+ (await getDocs(collection(db,'sections',code,'grades'))).forEach(d=>{const o=d.data();GRD[o.sid+'|'+o.sub]=o.v||{}});
+ vSec();
+});
+function vSec(){
+ const c=SC,L=(c.st||[]).slice().sort(by),subs=c.sub||[];
+ let tot=0,fil=0;
+ const rows=L.map((s,i)=>`<tr><td style="text-align:right"><a href="#" onclick="stuRec('${s.id}');return false">${i+1}. ${esc(s.n)}</a></td>`+subs.map(sb=>{const x=nm((GRD[s.id+'|'+sb]||{})[GM]);tot++;if(x!==null)fil++;return `<td${x!==null&&x<50?' class="f"':''}>${x===null?'–':x}</td>`}).join('')+'</tr>').join('');
+ const avg=subs.map(sb=>{const a=L.map(s=>nm((GRD[s.id+'|'+sb]||{})[GM])).filter(x=>x!==null);return `<td><b>${a.length?(a.reduce((p,q)=>p+q,0)/a.length).toFixed(1):'–'}</b></td>`}).join('');
+ $('#v').innerHTML=`<button class="l" onclick="backSec()">⬅️ كل الشعب</button><h3 style="margin:8px 0">${esc(c.name||c.code)}</h3>`
+  +`<div style="display:flex;gap:6px;overflow:auto">${CO.map((x,i)=>`<button class="l" style="width:auto;${i===GM?'background:#1f4d43;color:#fff':''}" onclick="setGM(${i})">${x}</button>`).join('')}</div>`
+  +`<p class="m">اكتمال الدرجات: ${fil} من ${tot} خانة — الأحمر أقل من 50 — اضغط اسم الطالب لسجله الكامل</p>`
+  +`<div class="tw"><table><tr><th>الطالب</th>${subs.map(x=>`<th>${esc(x)}</th>`).join('')}</tr>${rows}<tr><td>معدل الشعبة</td>${avg}</tr></table></div>`;
+}
+window.vSec=vSec;
+window.stuRec=sid=>{
+ const c=SC,s=(c.st||[]).find(x=>x.id===sid),subs=c.sub||[];
+ const R=subs.map(sb=>({sb,k:calc(sid,sb)}));
+ let n=0,any=false;R.forEach(r=>{if(r.k.eff!==null){any=true;if(r.k.eff<50)n++}});
+ const res=!any?'—':n===0?'ناجح':n<=3?'إكمال':'راسب';
+ $('#v').innerHTML=`<button class="l" onclick="vSec()">⬅️ رجوع للشعبة</button><h3 style="margin:8px 0">${esc(s.n)}</h3><p class="m">${esc(c.name||'')} — النتيجة: <b>${res}</b>${n?' (راسب بـ '+n+' مواد)':''}</p>`
+  +`<div class="tw"><table><tr><th>المادة</th>${CO.map(x=>`<th>${x}</th>`).join('')}<th>معدل ن1</th><th>معدل ن2</th><th>السنوي</th><th>النهائية</th></tr>`
+  +R.map(({sb,k})=>`<tr><td style="text-align:right">${esc(sb)}</td>${k.g.map(x=>`<td>${x===null?'':x}</td>`).join('')}<td><b>${k.a1??''}</b></td><td><b>${k.a2??''}</b></td><td><b>${k.annual??''}</b></td><td${k.eff!==null&&k.eff<50?' class="f"':''}><b>${k.eff??''}</b></td></tr>`).join('')+'</table></div>';
+};
 </script>
 </body>
 </html>
