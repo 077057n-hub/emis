@@ -35,10 +35,10 @@ td.f{color:#d23f37;font-weight:700}
 <div id="app"></div>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import {initializeAuth,browserSessionPersistence,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,addDoc,writeBatch,query,orderBy,limit} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const app=initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
-const auth=initializeAuth(app,{persistence:browserSessionPersistence}),db=getFirestore(app);
+const auth=getAuth(app),db=getFirestore(app);
 const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
 const GR=['الأول','الثاني','الثالث','الرابع','الخامس','السادس'],SEC=['أ','ب'];
 const $=s=>document.querySelector(s);
@@ -49,7 +49,7 @@ const by=(a,b)=>norm(a.n).localeCompare(norm(b.n),'ar');
 const msg=t=>{const e=$('#ms');if(e)e.textContent=t};
 const ok=async f=>{try{await f()}catch(e){msg('تعذر: '+(e.code||e.message))}};
 const SUBS=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','الحاسوب','اللغة الفرنسية','التربية الفنية والنشيد','التربية الرياضية'];
-let tab='imp',user=null,roster=null,prev=null,TC={},TS={};
+let tab=location.hash==='#gr'?'gr':'imp',user=null,roster=null,prev=null,TC={},TS={},TG={};
 const loadR=async force=>{if(!roster||force)roster=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()}));return roster};
 
 let role=null;
@@ -122,16 +122,16 @@ window.saveE=()=>ok(async()=>{
 /* ---- المعلمون ---- */
 async function vTc(){
  const s=await getDocs(collection(db,'teachers'));TC={};
- s.docs.forEach(d=>{TC[d.id]=d.data().grades||[];TS[d.id]=d.data().subjects||[]});
- $('#v').innerHTML='<div class="c"><input id="te" type="email" dir="ltr" placeholder="إيميل المعلم">'+GR.map(g=>`<label class="k gk"><input type="checkbox" value="${g}">${g}</label>`).join('')+'<p class="m">المواد (اتركها فارغة = كل المواد):</p>'+SUBS.map(x=>`<label class="k sk"><input type="checkbox" value="${x}">${x}</label>`).join('')+'<button onclick="saveT()">حفظ</button></div>'
-  +Object.entries(TC).map(([e,g])=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(e)}<br><span class="m">${esc(g.join('، '))}${(TS[e]||[]).length?' — '+esc(TS[e].join('، ')):''}</span></b><button class="l" onclick="editT('${esc(e)}')">✏️</button><button class="l" onclick="delT('${esc(e)}')">🗑</button></div>`).join('');
+ s.docs.forEach(d=>{TC[d.id]=d.data().grades||[];TS[d.id]=d.data().subjects||[];TG[d.id]=!!d.data().guide});
+ $('#v').innerHTML='<div class="c"><input id="te" type="email" dir="ltr" placeholder="إيميل المعلم">'+GR.map(g=>`<label class="k gk"><input type="checkbox" value="${g}">${g}</label>`).join('')+'<p class="m">المواد (اتركها فارغة = كل المواد):</p>'+SUBS.map(x=>`<label class="k sk"><input type="checkbox" value="${x}">${x}</label>`).join('')+'<label class="k"><input type="checkbox" id="tg"> مرشد صف (يظهر له سجل الدرجات)</label><button onclick="saveT()">حفظ</button></div>'
+  +Object.entries(TC).map(([e,g])=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(e)}<br><span class="m">${esc(g.join('، '))}${(TS[e]||[]).length?' — '+esc(TS[e].join('، ')):''}${TG[e]?' — مرشد صف':''}</span></b><button class="l" onclick="editT('${esc(e)}')">✏️</button><button class="l" onclick="delT('${esc(e)}')">🗑</button></div>`).join('');
 }
 window.saveT=()=>ok(async()=>{
  const e=clean($('#te').value),g=[...document.querySelectorAll('.gk input:checked')].map(x=>x.value),sb=[...document.querySelectorAll('.sk input:checked')].map(x=>x.value);
  if(!e||!g.length)return msg('اكتب الإيميل واختر صفاً واحداً على الأقل');
- await setDoc(doc(db,'teachers',e),{grades:g,subjects:sb});vTc();
+ await setDoc(doc(db,'teachers',e),{grades:g,subjects:sb,guide:$('#tg').checked});vTc();
 });
-window.editT=e=>{$('#te').value=e;document.querySelectorAll('.gk input').forEach(x=>x.checked=TC[e].includes(x.value));document.querySelectorAll('.sk input').forEach(x=>x.checked=(TS[e]||[]).includes(x.value))};
+window.editT=e=>{$('#te').value=e;document.querySelectorAll('.gk input').forEach(x=>x.checked=TC[e].includes(x.value));document.querySelectorAll('.sk input').forEach(x=>x.checked=(TS[e]||[]).includes(x.value));$('#tg').checked=!!TG[e]};
 window.delT=e=>{if(confirm('حذف المعلم؟'))ok(async()=>{await deleteDoc(doc(db,'teachers',e));vTc()})};
 
 /* ---- الطلاب ---- */
