@@ -1,0 +1,48 @@
+/* theme.css — الشكل العصري الموحد لسجل الدرجات ودفتر المعلم (داكن افتراضياً وفاتح حسب إعداد الجوال) */
+:root{--bg:#0b1220;--solid:#121a2e;--card:rgba(255,255,255,.055);--tx:#e8eefc;--mu:#8fa0c0;--pr:#6ea1ff;--pl:rgba(110,161,255,.15);--bd:rgba(255,255,255,.09);--no:#ff6b6b;color-scheme:dark}
+@media(prefers-color-scheme:light){:root{--bg:#f2f5fb;--solid:#fff;--card:#fff;--tx:#0f1a33;--mu:#62708f;--pr:#2563eb;--pl:#e4ecff;--bd:#dfe6f3;color-scheme:light}}
+body{background:radial-gradient(900px 420px at 100% -8%,rgba(37,99,235,.28),transparent 60%),radial-gradient(700px 380px at -10% 12%,rgba(124,58,237,.2),transparent 60%),var(--bg);background-attachment:fixed}
+@media(prefers-color-scheme:light){body{background:radial-gradient(900px 420px at 100% -8%,rgba(37,99,235,.10),transparent 60%),var(--bg)}}
+header{background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+h1{font-weight:800}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.16)}
+.card .n{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-radius:12px;min-width:32px;padding:4px 0;font-weight:700}
+.b{background:linear-gradient(135deg,#2563eb,#7c3aed);box-shadow:0 8px 20px rgba(79,70,229,.32);border-radius:16px}
+.b.g{background:var(--pl);color:var(--pr);box-shadow:none;border:1px solid var(--bd)}
+main .row .b.g:nth-child(2){background:rgba(124,58,237,.18);color:#b79bff}
+main .row .b.g:nth-child(3){background:rgba(20,184,166,.18);color:#2dd4bf}
+main .row .b.g:nth-child(4){background:rgba(248,113,113,.16);color:#f87171}
+.ic{background:var(--card);border:1px solid var(--bd);border-radius:14px;color:var(--tx);box-shadow:none}
+.ic.s{background:none;border:0}
+select,input,textarea{background:var(--card);border:1px solid var(--bd);border-radius:14px;color:var(--tx)}
+select option{background:var(--solid);color:var(--tx)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pr);border-color:transparent}
+nav{background:var(--solid);border-top:1px solid var(--bd);border-radius:22px 22px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.25)}
+nav button{position:relative;font-weight:600}
+nav .on{color:var(--pr)}
+nav .on span{filter:drop-shadow(0 0 10px var(--pr))}
+nav .on::after{content:"";position:absolute;bottom:2px;left:32%;right:32%;height:3px;border-radius:3px;background:var(--pr)}
+.days button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:14px}
+.days .on{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-color:transparent}
+.seg button{border-radius:12px;background:var(--card);color:var(--tx)}
+.seg .on{background:var(--pl);border-color:var(--pr)}
+.chips span{background:var(--card);border:1px solid var(--bd);border-radius:14px}
+.pill{border-radius:20px}
+.pill.ok{background:rgba(52,211,153,.18);color:#34d399}
+.pill.wn{background:rgba(251,191,36,.18);color:#fbbf24}
+.pill.neg{background:rgba(248,113,113,.18);color:#f87171}
+.warn{background:rgba(251,191,36,.14);color:#fbbf24;border:1px solid rgba(251,191,36,.25);border-radius:14px}
+.t{background:var(--solid);color:var(--tx);border:1px solid var(--bd);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.ov{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.sh{background:var(--solid);border:1px solid var(--bd);border-radius:26px 26px 0 0;color:var(--tx)}
+.tw{background:var(--card);border:1px solid var(--bd);border-radius:18px}
+th{background:var(--pl);color:var(--pr)}
+th,td{border-color:var(--bd)}
+td:first-child,th:first-child{background:var(--solid)}
+td.c{background:var(--pl)}
+.empty{color:var(--mu)}
+@media(prefers-color-scheme:light){
+ .pill.ok{background:#d8f1e0;color:#1f7a3d}.pill.wn{background:#fdecc8;color:#8a5a00}.pill.neg{background:#f8dcda;color:#a73832}
+ .warn{background:#fdf0cf;color:#6f5000;border-color:#f3e0a8}
+ main .row .b.g:nth-child(2){background:#efe7ff;color:#6d28d9}main .row .b.g:nth-child(3){background:#d9f5f1;color:#0f766e}main .row .b.g:nth-child(4){background:#fde4e4;color:#b91c1c}
+}

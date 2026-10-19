@@ -1,6 +1,7 @@
 /* teacher-link.js — ربط دفتر المعلم (teacher-app.html) بسجل الدرجات عند مرشد الصف
    ضعه بجانب teacher-app.html وأضف قبل </body> سطر:  <script type="module" src="teacher-link.js"></script> */
 (async()=>{
+const th=document.createElement('link');th.rel='stylesheet';th.href='theme.css?v=1';document.head.appendChild(th);
 import('./teacher-roster.js').catch(()=>{});
 import('./teacher-cloud.js').catch(()=>{});
 import('./teacher-extras.js').catch(()=>{});

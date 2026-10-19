@@ -1,6 +1,7 @@
 /* link.js — ربط سجل الدرجات (مرشد الصف) بدفتر الصف (المعلمين)
    ضعه بجانب index.html وأضف قبل </body> سطر:  <script type="module" src="link.js"></script> */
 (async()=>{
+const th=document.createElement('link');th.rel='stylesheet';th.href='theme.css?v=1';document.head.appendChild(th);
 /* ---- إصلاح الطباعة: ورقة A4 بصفحة وحدة + ترتيب السنة ---- */
 const st=document.createElement('style');
 st.textContent='@media print{.pp{height:279mm!important;max-height:279mm!important}}';
