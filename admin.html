@@ -53,7 +53,7 @@ let tab=location.hash==='#gr'?'gr':'imp',user=null,roster=null,prev=null,TC={},T
 const loadR=async force=>{if(!roster||force)roster=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()}));return roster};
 
 let role=null;
-const TA=[['imp','استيراد'],['tc','المعلمون'],['st','الطلاب'],['lg','النقل'],['gr','الدرجات'],['vw','المعاونون']],TV=[['gr','الدرجات']];
+const TA=[['imp','استيراد'],['cl','تعيين الشعب'],['tc','المعلمون'],['st','الطلاب'],['lg','النقل'],['gr','الدرجات'],['vw','المعاونون']],TV=[['gr','الدرجات']];
 function render(){
  const A=$('#app');
  if(!user){A.innerHTML='<div class="c"><input id="em" type="email" dir="ltr" placeholder="الإيميل"><input id="pw" type="password" dir="ltr" placeholder="كلمة المرور"><button onclick="lg()">دخول</button><button class="l" onclick="su()">إنشاء حساب جديد</button></div><p class="m" id="ms"></p>';return}
@@ -62,7 +62,7 @@ function render(){
  const T=role==='admin'?TA:TV;
  if(!T.some(x=>x[0]===tab))tab=T[0][0];
  A.innerHTML=`<p class="m">${esc(user.email)} (${role==='admin'?'المالك':'معاون'}) — <a href="#" onclick="out();return false">خروج</a></p><div class="t" style="flex-wrap:wrap">${T.map(([k,l])=>`<button class="${k===tab?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</div><div id="v"></div><p class="m" id="ms"></p>`;
- ({imp:vImp,tc:vTc,st:vSt,lg:vLg,gr:vGr,vw:vVw})[tab]();
+ ({imp:vImp,cl:vCl,tc:vTc,st:vSt,lg:vLg,gr:vGr,vw:vVw})[tab]();
 }
 Object.assign(window,{
  go:k=>{tab=k;render()},
@@ -224,6 +224,46 @@ window.stuRec=sid=>{
   +`<div class="tw"><table><tr><th>المادة</th>${CO.map(x=>`<th>${x}</th>`).join('')}<th>معدل ن1</th><th>معدل ن2</th><th>السنوي</th><th>النهائية</th></tr>`
   +R.map(({sb,k})=>`<tr><td style="text-align:right">${esc(sb)}</td>${k.g.map(x=>`<td>${x===null?'':x}</td>`).join('')}<td><b>${k.a1??''}</b></td><td><b>${k.a2??''}</b></td><td><b>${k.annual??''}</b></td><td${k.eff!==null&&k.eff<50?' class="f"':''}><b>${k.eff??''}</b></td></tr>`).join('')+'</table></div>';
 };
+
+/* ---- تعيين الشعب: مرشد الصف ومعلم كل مادة ---- */
+let CLD={};
+const DEFS=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','التربية الفنية والنشيد','التربية الرياضية'];
+async function vCl(){
+ CLD={};(await getDocs(collection(db,'classes'))).forEach(d=>CLD[d.id]=d.data());
+ $('#v').innerHTML='<p class="m">اختر الشعبة لتحديد مرشد صفها ومعلم كل مادة (✓ = معيّنة). مرشد الصف يعدّل كل درجات شعبته، ومعلم المادة يعدّل مادته فقط ويشاهد الباقي.</p>'
+  +GR.map(g=>`<div class="r"><b>${g}</b>${SEC.map(s=>{const id=g+'_'+s;return `<button class="l" onclick="edCl('${id}')">${s}${CLD[id]?' ✓':''}</button>`}).join('')}</div>`).join('')
+  +'<div id="cle"></div>';
+}
+window.edCl=id=>{
+ const [g,s]=id.split('_'),c=CLD[id]||{},sb=c.subjects||{};
+ const on=x=>c.subjects?(x in sb):DEFS.includes(x);
+ $('#cle').innerHTML=`<div class="c"><h3 style="margin-bottom:6px">${g} / ${s}</h3><p class="m">مرشد الصف (إيميل)</p><input id="cg" type="email" dir="ltr" value="${esc(c.guide||'')}">`
+  +'<p class="m">علّم المواد الي تُدرَّس بهذي الشعبة، واكتب إيميل معلم كل مادة:</p>'
+  +SUBS.map((x,i)=>`<div class="r"><label class="k" style="min-width:150px"><input type="checkbox" class="cs" data-i="${i}" ${on(x)?'checked':''}> ${esc(x)}</label><input type="email" dir="ltr" class="ct" data-i="${i}" placeholder="إيميل المعلم" value="${esc(sb[x]||'')}" style="flex:1;margin:0"></div>`).join('')
+  +`<button onclick="saveCl('${id}')">حفظ تعيين الشعبة</button></div>`;
+ $('#cle').scrollIntoView({behavior:'smooth'});
+};
+window.saveCl=id=>ok(async()=>{
+ const [g,s]=id.split('_');
+ const guide=clean($('#cg').value),subjects={};
+ document.querySelectorAll('.cs').forEach(cb=>{
+  if(cb.checked){const i=cb.dataset.i;subjects[SUBS[i]]=clean(document.querySelector('.ct[data-i="'+i+'"]').value)}
+ });
+ const members=[...new Set([guide,...Object.values(subjects)].filter(Boolean))];
+ const oldM=(CLD[id]||{}).members||[];
+ await setDoc(doc(db,'classes',id),{g,s,guide,subjects,members,u:Date.now()});
+ CLD[id]={g,s,guide,subjects,members};
+ /* مزامنة وثائق المعلمين (تنزيل الصفوف وظهور البطاقات) */
+ const T={};
+ Object.values(CLD).forEach(c=>{
+  const add=(em,f)=>{if(!em)return;const t=T[em]=T[em]||{grades:new Set(),subjects:new Set(),guide:false};t.grades.add(c.g);f(t)};
+  add(c.guide,t=>{t.guide=true});
+  Object.entries(c.subjects||{}).forEach(([sb,em])=>add(em,t=>t.subjects.add(sb)));
+ });
+ for(const [em,t] of Object.entries(T))await setDoc(doc(db,'teachers',em),{grades:[...t.grades],subjects:[...t.subjects],guide:t.guide});
+ for(const em of oldM)if(!T[em])await deleteDoc(doc(db,'teachers',em));
+ msg('تم الحفظ ✅');vCl();
+});
 </script>
 </body>
 </html>
