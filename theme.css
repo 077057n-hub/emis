@@ -53,3 +53,5 @@ nav .hmb span{display:flex;align-items:center;justify-content:center;width:58px;
 nav .hmb{color:var(--pr);font-weight:700}
 nav .hmb::after{display:none}
 nav .hmb:active span{transform:scale(.94)}
+nav .ng{flex:1;display:flex;min-width:0}
+nav .ng button{flex:1;min-width:0}

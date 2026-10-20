@@ -159,10 +159,15 @@ try{
 const addHm=()=>{
  const nav=document.querySelector('#app nav');
  if(!nav||nav.querySelector('.hmb'))return;
- const b=document.createElement('button');
- b.className='hmb';b.innerHTML='<span>🏠</span>الرئيسية';
- b.onclick=()=>{location.href='app.html'};
- const k=nav.children;nav.insertBefore(b,k[Math.floor(k.length/2)]||null);
+ const bs=[...nav.children],k=Math.ceil(bs.length/2);
+ const g1=document.createElement('div'),g2=document.createElement('div');
+ g1.className=g2.className='ng';
+ bs.slice(0,k).forEach(b=>g1.appendChild(b));
+ bs.slice(k).forEach(b=>g2.appendChild(b));
+ const h=document.createElement('button');
+ h.className='hmb';h.innerHTML='<span>🏠</span>الرئيسية';
+ h.onclick=()=>{location.href='app.html'};
+ nav.append(g1,h,g2);
 };
 new MutationObserver(addHm).observe(document.getElementById('app'),{childList:true,subtree:true});
 addHm();
