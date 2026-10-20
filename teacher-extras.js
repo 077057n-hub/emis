@@ -10,6 +10,22 @@ const att=(id,pref)=>{
  return {a,l,p};
 };
 
+/* ---- حذف طالب من جدول المدرسة (المالك نهائياً، غيره يخفيه عنده) ---- */
+const OWNER='077057n@gmail.com';
+window.exDelStu=sid=>{
+ const s=D.st.find(x=>x.id===sid);if(!s)return;
+ const T=window.TL,own=!!(T&&T.user&&(T.user.email||'').toLowerCase()===OWNER);
+ ask(own?'حذف الطالب من جدول المدرسة نهائياً؟ يختفي عند كل المعلمين.':'هذا الطالب من جدول المدرسة، فيُخفى من دفترك فقط. الحذف الكامل يتم من إدارة المدرسة. متأكد؟',async()=>{
+  if(own){try{await T.F.updateDoc(T.F.doc(T.db,'roster',s.eid),{del:true,u:Date.now()})}catch(x){return toast('تعذر الحذف من المدرسة')}}
+  (D.hid=D.hid||[]).push(s.eid);
+  D.st=D.st.filter(x=>x.id!==sid);
+  Object.keys(D.at).forEach(k=>k.endsWith('|'+sid)&&delete D.at[k]);
+  delete D.gr[sid];if(D.sn)delete D.sn[sid];
+  D.bh=(D.bh||[]).filter(b=>b.s!==sid);
+  save();render();
+ });
+};
+
 /* ---- ملاحظات الطالب ---- */
 window.exNotes=sid=>{
  const s=D.st.find(x=>x.id===sid);if(!s)return;
@@ -49,6 +65,8 @@ function deco(){
  if(!L.length||cards.length!==L.length)return;
  cards.forEach((c,i)=>{
   const s=L[i];
+  const dl=c.querySelector('button[onclick^="delS"]');
+  if(dl&&s.eid){dl.removeAttribute('onclick');dl.onclick=ev=>{ev.stopPropagation();exDelStu(s.id)}}
   c.querySelectorAll('span.mu').forEach(sp=>{if(sp.textContent.includes('⭐'))sp.textContent=sp.textContent.replace(/\s*⭐\s*-?\d+/,'')});
   if(!c.querySelector('.exn')){
    const n=((D.sn||{})[s.id]||[]).length,b=document.createElement('button');

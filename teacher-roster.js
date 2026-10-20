@@ -12,7 +12,7 @@ function apply(list){
  let ch=0;
  list.sort((a,b)=>norm(a.n).localeCompare(norm(b.n),'ar'));
  list.forEach(r=>{
-  if(r.del||!grades.includes(r.g))return;
+  if(r.del||!grades.includes(r.g)||(D.hid||[]).includes(r.eid))return;
   const c=cls(r.g,r.s||'—');
   let s=D.st.find(x=>x.eid===r.eid);
   if(!s){
@@ -50,7 +50,12 @@ async function pushLocal(){
  const todo=[];
  D.st.forEach(s=>{
   if(s.eid||!s.n)return;
-  const c=D.cl.find(x=>x.id===s.c);if(!c||!c.k)return;
+  const c=D.cl.find(x=>x.id===s.c);if(!c)return;
+  if(!c.k){
+   const p=String(c.n||'').split('/').map(x=>x.trim());
+   const gg=grades.find(x=>norm(x)===norm(p[0])),ss=['أ','ب'].find(x=>norm(x)===norm(p[1]));
+   if(p.length===2&&gg&&ss)c.k=gg+'|'+ss;else return;
+  }
   const [g,sec]=c.k.split('|');
   if(!grades.includes(g)||!['أ','ب'].includes(sec))return;
   const hit=RC.find(x=>!x.del&&norm(x.n)===norm(s.n));
