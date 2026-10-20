@@ -2,6 +2,7 @@
    ضعه بجانب teacher-app.html وأضف قبل </body> سطر:  <script type="module" src="teacher-link.js"></script> */
 (async()=>{
 const th=document.createElement('link');th.rel='stylesheet';th.href='theme.css?v=1';document.head.appendChild(th);
+{const bi=TABS.findIndex(x=>x[0]==='bh');if(bi>=0)TABS.splice(bi,1);if(tab==='bh')tab='st'}
 import('./teacher-roster.js').catch(()=>{});
 import('./teacher-cloud.js').catch(()=>{});
 import('./teacher-extras.js').catch(()=>{});
@@ -156,13 +157,12 @@ try{
 }catch(e){fail=true;ready=false;render()}
 /* ---- رابط الرجوع للشاشة الرئيسية ---- */
 const addHm=()=>{
- const hd=document.querySelector('#app header');
- if(!hd||hd.querySelector('#hm'))return;
- const h=document.createElement('div');
- h.id='hm';h.textContent='🏠 الرئيسية';
- h.style.cssText='font-size:13px;color:var(--pr);padding:0 2px 4px;cursor:pointer';
- h.onclick=()=>{location.href='app.html'};
- hd.insertBefore(h,hd.firstChild);
+ const nav=document.querySelector('#app nav');
+ if(!nav||nav.querySelector('.hmb'))return;
+ const b=document.createElement('button');
+ b.className='hmb';b.innerHTML='<span>🏠</span>الرئيسية';
+ b.onclick=()=>{location.href='app.html'};
+ const k=nav.children;nav.insertBefore(b,k[Math.floor(k.length/2)]||null);
 };
 new MutationObserver(addHm).observe(document.getElementById('app'),{childList:true,subtree:true});
 addHm();

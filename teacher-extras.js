@@ -49,6 +49,7 @@ function deco(){
  if(!L.length||cards.length!==L.length)return;
  cards.forEach((c,i)=>{
   const s=L[i];
+  c.querySelectorAll('span.mu').forEach(sp=>{if(sp.textContent.includes('⭐'))sp.textContent=sp.textContent.replace(/\s*⭐\s*-?\d+/,'')});
   if(!c.querySelector('.exn')){
    const n=((D.sn||{})[s.id]||[]).length,b=document.createElement('button');
    b.className='ic s exn';b.innerHTML='📝'+(n?'<small style="font-size:11px">'+n+'</small>':'');
@@ -64,7 +65,8 @@ function deco(){
   }
  });
 }
-const w0=TABS[0][3];TABS[0][3]=()=>w0()+(setTimeout(deco,0),'');
-const w1=TABS[1][3];TABS[1][3]=()=>'<button class="b g" onclick="exSum()">📊 ملخص الغياب والتأخر</button>'+w1()+(setTimeout(deco,0),'');
+const T0=TABS.find(x=>x[0]==='st'),T1=TABS.find(x=>x[0]==='at');
+const w0=T0[3];T0[3]=()=>w0()+(setTimeout(deco,0),'');
+const w1=T1[3];T1[3]=()=>'<button class="b g" onclick="exSum()">📊 ملخص الغياب والتأخر</button>'+w1()+(setTimeout(deco,0),'');
 render();
 })();

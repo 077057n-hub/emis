@@ -104,6 +104,6 @@ const flt=()=>{
 window.sqBox=()=>`<input id="sq" placeholder="🔍 ابحث باسم الطالب" value="${esc(SQ)}" oninput="sqSet(this.value)">`;
 window.sqSet=v=>{SQ=v;flt()};
 window.sqFlt=flt;
-[0,1,2,3].forEach(i=>{const f=TABS[i][3];TABS[i][3]=()=>window.sqBox()+f()+(setTimeout(flt,0),'')});
+['st','at','gr'].forEach(k=>{const t=TABS.find(x=>x[0]===k);if(!t)return;const f=t[3];t[3]=()=>window.sqBox()+f()+(setTimeout(flt,0),'')});
 
 })();

@@ -46,3 +46,10 @@ td.c{background:var(--pl)}
  .warn{background:#fdf0cf;color:#6f5000;border-color:#f3e0a8}
  main .row .b.g:nth-child(2){background:#efe7ff;color:#6d28d9}main .row .b.g:nth-child(3){background:#d9f5f1;color:#0f766e}main .row .b.g:nth-child(4){background:#fde4e4;color:#b91c1c}
 }
+
+/* زر الرئيسية بمنتصف الشريط السفلي */
+nav .hmb{flex:0 0 78px;overflow:visible}
+nav .hmb span{display:flex;align-items:center;justify-content:center;width:58px;height:58px;margin:-30px auto 2px;border-radius:50%;font-size:27px;background:linear-gradient(135deg,#2563eb,#7c3aed);box-shadow:0 8px 22px rgba(79,70,229,.5),0 0 0 6px var(--solid);filter:none}
+nav .hmb{color:var(--pr);font-weight:700}
+nav .hmb::after{display:none}
+nav .hmb:active span{transform:scale(.94)}
