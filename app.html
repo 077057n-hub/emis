@@ -83,6 +83,7 @@ async function home(u){
  const r=await roleOf(u),o=!!r.owner;
  const label=o?'المالك':[r.teacher&&'معلم',r.guide&&'مرشد صف',r.viewer&&'معاون'].filter(Boolean).join(' · ');
  let h=`<div class="u"><span>${esc(u.email)}${label?' — '+label:''}</span><a href="#" onclick="out();return false">خروج</a></div>`;
+ if(o||r.teacher||r.guide)h+=card('school.html','🏫','صفوفي (الجديد)','الطلاب والحضور والدرجات بالشعب المعيّنة لك');
  if(o||r.teacher)h+=card('teacher-app.html','👨‍🏫','دفتر المعلم','الطلاب والحضور والدرجات والملاحظات');
  if(o||r.guide)h+=card('grades-record.html','📝','سجل الدرجات','لمرشد الصف: السجل النهائي والنواقص والطباعة');
  if(o||r.viewer)h+=card('admin.html#gr','📊','متابعة الدرجات','سجلات كل الشعب والمعلمين');
