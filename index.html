@@ -1,204 +1,902 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>استمارة إضافة الطالب — الإيمس</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>نظام إدارة المدرسة وسجل الدرجات</title>
+<link rel="manifest" href="app-manifest.json">
+<meta name="theme-color" content="#1f4d43">
 <style>
-:root{--g:#1f4d43;--ln:#2b2b2b;--bg:#f3f1ea;--rd:#b3261e}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);font-family:Tahoma,'Segoe UI',Arial,sans-serif;color:#1b1b1b;line-height:1.6}
-.wrap{width:100%;max-width:860px;margin:0 auto;padding:14px}
-header{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
-header h1{font-size:20px;margin:0;color:var(--g)}
-header small{display:block;color:#555;font-size:13px}
-h2{margin:18px 0 0;padding:8px 12px;background:#e4e2d8;border:1.5px solid var(--ln);border-bottom:0;font-size:16px}
-.grid{border:1.5px solid var(--ln);background:#fff;display:grid;grid-template-columns:minmax(0,1fr)}
-.f{min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-top:1px solid #cfcfc6}
-.f:first-child{border-top:0}
-.f span{font-size:14px;font-weight:600}
-.f b{color:var(--rd);margin-inline-start:3px}
-input,select{font:inherit;font-size:16px;padding:8px 10px;border:1px solid #b9b9b0;border-radius:6px;background:#fff;width:100%}
-input:focus,select:focus{outline:2px solid var(--g);outline-offset:1px}
-.hp{display:none}
-.notes{margin:18px 0;font-size:14px;color:#444}
-.notes ol{margin:4px 0;padding-inline-start:22px}
-button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:12px 22px;background:var(--g);color:#fff;font-weight:700}
-button.l{background:#fff;color:var(--g);border:1px solid var(--g);padding:7px 14px}
-.msg{margin:12px 0;padding:10px 12px;border-radius:8px;display:none}
-.msg.e{display:block;background:#fbe9e7;color:var(--rd)}
-.done{text-align:center;padding:40px 10px;display:none}
-.done h2{background:none;border:0;color:var(--g);font-size:22px}
-.msg.i{display:block;background:#e7f2ea;color:var(--g)}
-.fh{font-size:12px;color:#666;font-weight:400}
-#mdl{display:none;position:fixed;inset:0;background:#000c;overflow:auto;padding:14px;z-index:9}
-#mb{max-width:640px;margin:0 auto;color:#fff;text-align:center}
-#mb img{max-width:100%;display:block;margin:6px auto 14px;background:#fff;border-radius:6px}
-input[type=file]{padding:6px}
-@media(min-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.f{border-top:0;border-bottom:1px solid #cfcfc6}.f:nth-child(odd){border-inline-start:1px solid #cfcfc6}}
-/* admin */
-#adm{display:none}
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
-.bar input{max-width:260px}
-.tw{overflow:auto;max-height:70vh;border:1px solid #bbb;background:#fff}
-table{border-collapse:collapse;font-size:13px;white-space:nowrap}
-th,td{border:1px solid #ddd;padding:5px 8px}
-th{background:#e4e2d8;position:sticky;top:0}
-tr.ok{background:#e7f2ea}
+:root{
+  --bg:#f4f6f8;--card:#ffffff;--tx:#1b2533;--mu:#64748b;--pr:#1f4d43;--pr-light:#e8f2ef;
+  --bd:#d9e2ec;--err:#d32f2f;--succ:#2e7d32;--warn:#ed6c02;
+  --hdr-bg:#e4e2d8;--tbl-blue:#1f3b9d;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0f172a;--card:#1e293b;--tx:#f1f5f9;--mu:#94a3b8;--pr:#2dd4bf;--pr-light:#134e48;
+    --bd:#334155;--err:#f87171;--succ:#4ade80;--warn:#fbbf24;
+    --hdr-bg:#1e293b;--tbl-blue:#3b82f6;
+  }
+}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Tajawal,Tahoma,Arial,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:76px;line-height:1.5}
+
+/* الترويسة والتنقل */
+header{background:var(--card);border-bottom:1px solid var(--bd);padding:12px 16px;position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px;font-weight:700;color:var(--pr);display:flex;align-items:center;gap:8px}
+.nav-bottom{position:fixed;bottom:0;inset-inline:0;background:var(--card);border-top:1px solid var(--bd);display:flex;z-index:30}
+.nav-bottom button{flex:1;border:0;background:none;padding:8px 4px;font:inherit;font-size:11px;color:var(--mu);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav-bottom button span{font-size:20px}
+.nav-bottom button.active{color:var(--pr);font-weight:700}
+
+/* العناصر العامة */
+main{max-width:920px;margin:0 auto;padding:14px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}
+input,select,button{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);width:100%}
+input:focus,select:focus{outline:2px solid var(--pr);border-color:transparent}
+button{background:var(--pr);color:#fff;border:0;font-weight:700;cursor:pointer;display:inline-flex;justify-content:center;align-items:center;gap:6px}
+button.l{background:var(--pr-light);color:var(--pr);border:1px solid var(--pr)}
+button.sm{width:auto;padding:6px 10px;font-size:13px}
+button.danger{background:#dc2626;color:#fff}
+.icon-btn{width:42px;height:42px;border-radius:10px;border:1px solid var(--bd);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex:none}
+.mu-text{color:var(--mu);font-size:12px}
+.pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;background:var(--pr-light);color:var(--pr)}
+.pill.red{background:#fee2e2;color:#b91c1c}
+.pill.green{background:#dcfce7;color:#15803d}
+.pill.warn{background:#fef3c7;color:#b45309}
+
+/* الجداول والأشرطة */
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--bd);border-radius:12px;margin:10px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap;text-align:center}
+th,td{border:1px solid var(--bd);padding:6px 8px}
+th{background:var(--hdr-bg);font-weight:700}
+td.f{color:var(--err);font-weight:700}
+.days-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin:8px 0}
+.days-bar button{flex:none;width:auto;padding:8px 14px;border-radius:10px;font-size:13px;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.days-bar button.on{background:var(--pr);color:#fff;font-weight:700;border-color:var(--pr)}
+
+/* النوافذ العائمة والتنبيهات */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99;display:flex;align-items:flex-end}
+.modal{background:var(--card);width:100%;max-height:90vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px;box-shadow:0 -4px 20px rgba(0,0,0,0.2)}
+.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 18px;border-radius:25px;z-index:100;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+
+/* قسم الطباعة الورقية A4 */
+#print-area{display:none}
+@page{size:A4 portrait;margin:6mm 8mm}
+@media print{
+  body{background:#fff!important;color:#000!important;padding:0!important}
+  header,nav,.nav-bottom,main,.overlay,.toast{display:none!important}
+  #print-area{display:block!important}
+  .a4-page{width:100%;height:285mm;max-height:285mm;box-sizing:border-box;direction:rtl;background:#fff;color:#000;display:flex;flex-direction:column;page-break-after:always;break-after:page;font-family:Tajawal,Tahoma,Arial,sans-serif}
+  .a4-page:last-child{page-break-after:auto;break-after:auto}
+  
+  /* ترويسة الصفحة */
+  .p-top{display:flex;gap:4mm;margin-bottom:3mm;height:34mm}
+  .p-box{border:0.8mm solid #1f3b9d;border-radius:3mm;padding:2mm;display:flex;flex-direction:column;justify-content:center}
+  .p-title{flex:1.5;text-align:center}
+  .p-title h2{font-size:15px;color:#c0392b;margin:0 0 2mm}
+  .p-title span{font-size:13px;font-weight:700}
+  .p-no{flex:0 0 13mm;height:13mm;border:0.6mm solid #1f3b9d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;align-self:center}
+  .p-info{flex:1.2;font-size:12px;display:flex;flex-direction:column;justify-content:space-around}
+  .p-info div{border-bottom:0.3mm dotted #444;padding-bottom:1mm}
+
+  /* جداول الدرجات الرسمية */
+  .p-table-wrap{flex:1 1 0;min-height:0}
+  table.p-table{width:100%;height:100%;border-collapse:collapse;table-layout:fixed}
+  table.p-table th,table.p-table td{border:0.4mm solid #1f3b9d;text-align:center;padding:0;font-size:12px;color:#000}
+  table.p-table th.blue-hd{background:#1f3b9d;color:#fff;font-weight:700;font-size:13px}
+  table.p-table th.sub-blue{background:#eef2fb;font-size:10px;font-weight:700}
+  table.p-table td.sub-name{color:#c0392b;font-weight:700;font-size:12px;background:#fbe9e5}
+  .vt{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);line-height:1;white-space:nowrap;font-size:10px}
+
+  /* جدول المجاميع والتذييل */
+  .p-sums{margin-top:2mm;height:18mm}
+  .p-footer{display:flex;gap:3mm;margin-top:3mm;height:12mm}
+  .p-f-box{border:0.6mm solid #1f3b9d;border-radius:2mm;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+  .p-f-lbl{flex:0 0 26mm;background:#eef2fb}
+  .p-f-val{flex:1}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<section id="pub">
- <header>
-  <div><h1>استمارة إضافة الطالب لنظام إدارة المعلومات التربوية (EMIS)</h1>
+<header>
+  <h1>🏫 <span id="app-title">إدارة المدرسة</span></h1>
+  <div class="row" style="margin:0;width:auto">
+    <button class="icon-btn" id="btn-sync" onclick="syncNow()" title="مزامنة">🔄</button>
+    <button class="icon-btn" id="btn-user" onclick="userModal()" title="الحساب">👤</button>
   </div>
- </header>
- <form id="fm" novalidate></form>
- <div class="done" id="done"><h2>تم استلام الاستمارة ✔</h2><p>شكراً لك. سيتم تسجيل بيانات الطالب في النظام. لا حاجة لإرسالها مرة ثانية.</p><button class="l" onclick="location.reload()">تسجيل طالب آخر</button></div>
-</section>
+</header>
 
-<section id="adm">
- <header><h1>لوحة الإدارة — الردود</h1></header>
- <div id="login" class="bar"><input id="pw" type="password" placeholder="كلمة السر"><button onclick="login()">دخول</button></div>
- <div id="lmsg" class="msg"></div>
- <div id="data" style="display:none">
-  <div class="bar"><input id="q" placeholder="بحث بالاسم أو الرقم أو الصف"><button class="l" onclick="csv()">تنزيل Excel (CSV)</button><span id="cnt"></span></div>
-  <div class="tw"><table id="tb"></table></div>
- </div>
-</section>
+<main id="app-view"></main>
 
-<div id="mdl" onclick="this.style.display='none'"><div id="mb"></div></div>
-</div>
-<script>
-const URL_='https://efbkhyzaijlkmvmphmzq.supabase.co';
-const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmYmtoeXphaWpsa212bXBobXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTc2OTYsImV4cCI6MjEwNjg5MzY5Nn0.vQqMvAJzjBziwwomQrKolcEGVbOydq6ZRAUt_0wt0h4';
-const H={apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'};
-const GR=['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي'];
-// [key,label,type(t/d/n/p/s),required,options]  — عنصر بطول 1 = عنوان قسم
-const F=[
-['وثائق التعريف'],
-['full_name','الاسم','t',1],['father_name','اسم الأب','t',1],['grandfather_name','اسم والد الأب','t',1],['great_grandfather_name','اسم جد الأب','t'],['surname','اللقب','t'],
-['mother_name','اسم الأم','t',1],['mother_father_name','اسم والد الأم','t',1],['mother_grandfather_name','اسم جد الأم','t',1],
-['birth_date','تاريخ التولد','d',1],['nationality','الجنسية','t',1],['national_id','رقم البطاقة الوطنية','n',1],
-['المعلومات الشخصية وبيانات الطالب'],
-['gender','الجنس','s',1,['ذكر','أنثى']],['birthplace','مسقط الرأس','t'],
-['mother_tongue','اللغة الأم','s',1,['العربية','الكردية','التركمانية','السريانية','أخرى']],
-['marital_status','الحالة الاجتماعية','s',0,['أعزب','متزوج']],
-['blood_type','فئة الدم','s',0,['A+','A-','B+','B-','AB+','AB-','O+','O-']],
-['religion','الديانة','s',1,['الإسلام','المسيحية','الصابئة المندائية','الإيزيدية','أخرى']],
-['home_phone','رقم هاتف المنزل (ولي الأمر)','p',1],
-['special_needs','الاحتياجات الخاصة (اكتب: لا يوجد)','t',1],
-['economic_level','المستوى الاقتصادي','s',1,['تحت خط الفقر','فقيرة','متوسطة','عليا']],
-['social_welfare','مشمول بمنحة الرعاية الاجتماعية؟','s',1,['نعم','كلا']],
-['prev_result','نتيجة العام الدراسي السابق','s',1,['ناجح','راسب','تسجيل جديد']],
-['grade','الصف الدراسي الحالي','s',1,GR],['section','الشعبة','s',1,['أ','ب']],
-['address_district','العنوان (القضاء أو الناحية)','t',1],['city_village','المدينة / القرية','t'],
-['neighborhood','الحي','t'],['mahalla','المحلة','t'],['alley','زقاق','t'],['landmark','أقرب نقطة دالة','t',1],
-['تُملأ في حال كان للطالب هوية الأحوال المدنية'],
-['civil_id_no','رقم هوية الأحوال المدنية','n'],['nationality_cert_no','رقم شهادة الجنسية','n'],
-['registry_no','رقم السجل','n'],['page_no','رقم الصحيفة','n'],['issuer','جهة الإصدار','t'],
-['صور المستمسكات (اختياري — صورة واضحة من الهاتف)'],
-['id_front','البطاقة الموحدة — الوجه الأمامي','f'],['id_back','البطاقة الموحدة — الوجه الخلفي','f'],
-['res_front','بطاقة السكن — الوجه الأمامي','f'],['res_back','بطاقة السكن — الوجه الخلفي','f']
-];
-const KL={id_front:'البطاقة الموحدة — أمامي',id_back:'البطاقة الموحدة — خلفي',res_front:'بطاقة السكن — أمامي',res_back:'بطاقة السكن — خلفي'};
-const $=s=>document.querySelector(s);
+<nav class="nav-bottom" id="nav-bar"></nav>
+<div id="print-area"></div>
 
-function shrink(file){return new Promise((ok,no)=>{const img=new Image(),u=URL.createObjectURL(file);
-  img.onload=()=>{const sc=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement('canvas');
-  c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.72))};img.onerror=no;img.src=u})}
-/* ---------- نموذج الطلاب ---------- */
-(function build(){
-  let h='',open=false;
-  F.forEach(f=>{
-    if(f.length===1){if(open)h+='</div>';h+=`<h2>${f[0]}</h2><div class="grid">`;open=true;return}
-    const [k,l,t,r,o]=f,rq=r?' required':'';
-    const inp=t==='f'?`<input name="f_${k}" type="file" accept="image/*">`:t==='s'
-      ?`<select name="${k}"${rq}><option value="">اختر</option>${o.map(x=>`<option>${x}</option>`).join('')}</select>`
-      :`<input name="${k}"${rq} type="${t==='d'?'date':t==='p'?'tel':'text'}"${t==='n'||t==='p'?' inputmode="numeric"':''} autocomplete="off">`;
-    h+=`<label class="f"><span>${l}${r?'<b>*</b>':''}</span>${inp}</label>`;
-  });
-  h+=`</div><input class="hp" name="website" tabindex="-1" autocomplete="off">
-  <div class="notes"><b>ملاحظات</b><ol><li>يجب كتابة المعلومات بدقة وبخط واضح.</li><li>المعلومات المحددة بنجمة يجب كتابتها.</li><li>ارفاق نسخة من مستمسكات الطالب (البطاقة الوطنية، بطاقة السكن).</li></ol></div>
-  <div class="msg" id="err"></div><button id="sb" type="submit">إرسال الاستمارة</button>`;
-  $('#fm').innerHTML=h;
-})();
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-$('#fm').onsubmit=async e=>{
-  e.preventDefault();
-  const fm=e.target,err=$('#err');err.className='msg';
-  if(fm.website.value)return;
-  const bad=[...fm.elements].find(x=>x.required&&!x.value.trim());
-  if(bad){err.textContent='رجاءً أكمل الحقول الإلزامية (عليها نجمة).';err.className='msg e';bad.focus();return}
-  const d={client_id:crypto.randomUUID()};
-  new FormData(fm).forEach((v,k)=>{if(k!=='website'&&!k.startsWith('f_'))d[k]=String(v).trim()||null});
-  $('#sb').disabled=true;
-  try{
-    const r=await fetch(URL_+'/rest/v1/student_submissions',{method:'POST',headers:{...H,Prefer:'return=minimal'},body:JSON.stringify(d)});
-    if(r.ok){
-      let fail=0;
-      for(const el of fm.querySelectorAll('input[type=file]')){
-        if(!el.files[0])continue;
-        err.textContent='جاري رفع الصور… لا تغلق الصفحة';err.className='msg i';
-        try{
-          const data=await shrink(el.files[0]);
-          const u=await fetch(URL_+'/rest/v1/student_files',{method:'POST',headers:{...H,Prefer:'return=minimal'},body:JSON.stringify({client_id:d.client_id,kind:el.name.slice(2),data})});
-          if(!u.ok)fail++;
-        }catch(x){fail++}
-      }
-      fm.style.display='none';$('#done').style.display='block';scrollTo(0,0);
-      if(fail)$('#done p').textContent='تم استلام الاستمارة، لكن تعذّر رفع '+fail+' صورة. سلّم نسخة المستمسكات لإدارة المدرسة.';
-      return;
-    }
-    err.textContent=r.status===409?'هذا الرقم الوطني مسجّل مسبقاً. إذا تحتاج تعديل، راجع إدارة المدرسة.':'صار خطأ بالإرسال، حاول مرة ثانية.';
-  }catch(x){err.textContent='لا يوجد اتصال بالإنترنت، حاول مرة ثانية.'}
-  err.className='msg e';$('#sb').disabled=false;
+// إعدادات Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",
+  authDomain: "grades-record-1a3bd.firebaseapp.com",
+  projectId: "grades-record-1a3bd",
+  storageBucket: "grades-record-1a3bd.firebasestorage.app",
+  messagingSenderId: "250496527897",
+  appId: "1:250496527897:web:98d1eedf8b62695f1f0488"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app), db = getFirestore(app);
+
+// ثوابت ومصفوفات النظام
+const OWNER_EMAIL = '077057n@gmail.com';
+const GRADES = ['الأول','الثاني','الثالث','الرابع','الخامس','السادس'];
+const SECTIONS = ['أ','ب','ج','د'];
+const SUBJECTS = ['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','الحاسوب','اللغة الفرنسية','التربية الفنية والنشيد','التربية الرياضية'];
+const MONTHS_SENIOR = ['تشرين 1','تشرين 2','كانون 1','كانون 2','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];
+const MONTHS_JUNIOR = ['تشرين 1','تشرين 2','كانون 1','كانون 2','امتحان نصف السنة','شباط','آذار','نيسان','أيار','الامتحان النهائي'];
+
+// نصوص وحسابات مساعدة
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clean = s => String(s || '').replace(/[\s\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g,'').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase();
+const norm = s => String(s || '').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
+const num = x => (x === undefined || x === null || x === '' || isNaN(+x)) ? null : +x;
+const mean = a => { a = a.filter(x => x !== null); return a.length ? Math.round(a.reduce((p, q) => p + q, 0) / a.length) : null; };
+
+// حالة التطبيق العامة
+let currentUser = null;
+let userRoles = { isOwner: false, isGuide: false, isTeacher: false, isViewer: false };
+let appState = {
+  tab: 'grades', // grades, teacher, admin, emis
+  classes: [],
+  roster: [],
+  gradesData: {},   // key: classId + '|' + sid + '|' + sub
+  subScores: {},    // للدرجات المفصلة (إسلامية، عربي)
+  activeClassId: null,
+  activeMonth: 0,
+  activeSub: 'التربية الإسلامية',
+  schoolInfo: JSON.parse(localStorage.getItem('sch_info') || '{"schoolName":"","principalName":"","guideName":"","academicYear":"2026 / 2027"}')
 };
 
-/* ---------- لوحة الإدارة (#admin) ---------- */
-let rows=[],PW='';
-function route(){const a=location.hash==='#admin';$('#pub').style.display=a?'none':'block';$('#adm').style.display=a?'block':'none'}
-addEventListener('hashchange',route);route();
+// إشعار عائم
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
 
-async function login(){
-  PW=$('#pw').value;const m=$('#lmsg');m.className='msg';
-  const r=await fetch(URL_+'/rest/v1/rpc/admin_list',{method:'POST',headers:H,body:JSON.stringify({pw:PW})});
-  if(!r.ok){m.textContent='كلمة السر غير صحيحة.';m.className='msg e';return}
-  rows=await r.json();$('#login').style.display='none';$('#data').style.display='block';draw();
+// نافذة منبثقة
+function openModal(title, contentHtml, onConfirm = null, confirmText = 'حفظ') {
+  const m = document.createElement('div');
+  m.className = 'overlay';
+  m.innerHTML = `<div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3>${title}</h3>
+      <button class="icon-btn" id="m-close" style="width:32px;height:32px">✕</button>
+    </div>
+    <div>${contentHtml}</div>
+    <div class="row" style="margin-top:14px">
+      ${onConfirm ? `<button id="m-ok">${confirmText}</button>` : ''}
+      <button class="l" id="m-cancel">${onConfirm ? 'إلغاء' : 'إغلاق'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.querySelector('#m-close').onclick = () => m.remove();
+  m.querySelector('#m-cancel').onclick = () => m.remove();
+  if (onConfirm) m.querySelector('#m-ok').onclick = () => { if (onConfirm(m) !== false) m.remove(); };
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  return m;
 }
-const fields=F.filter(f=>f.length>1&&f[2]!=='f');
-function draw(){
-  const q=$('#q').value.trim(),v=rows.filter(r=>!q||Object.values(r).join(' ').includes(q));
-  $('#cnt').textContent=`${v.length} من ${rows.length}`;
-  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  $('#tb').innerHTML='<tr><th>أُدخل بالإيمس</th><th>الصور</th>'+fields.map(f=>`<th>${f[1]}</th>`).join('')+'<th>وقت الإرسال</th></tr>'+
-   v.map(r=>`<tr class="${r.entered?'ok':''}"><td><input type="checkbox" style="width:auto" ${r.entered?'checked':''} onchange="mark(${r.id},this.checked)"></td><td>${r.client_id?`<button class="l" onclick="imgs('${r.client_id}')">عرض</button>`:''}</td>`+
-   fields.map(f=>`<td>${esc(r[f[0]])}</td>`).join('')+`<td>${esc(r.created_at.slice(0,16).replace('T',' '))}</td></tr>`).join('');
+
+/* ========================================================
+   1. نظام الصلاحيات وإدارة الحسابات
+   ======================================================== */
+onAuthStateChanged(auth, async u => {
+  currentUser = u;
+  if (!u) {
+    userRoles = { isOwner: false, isGuide: false, isTeacher: false, isViewer: false };
+    renderLogin();
+    return;
+  }
+  const email = clean(u.email);
+  userRoles.isOwner = (email === clean(OWNER_EMAIL));
+  
+  // فحص الصلاحيات من قاعدة البيانات
+  try {
+    const [guideDoc, viewerDoc] = await Promise.all([
+      getDoc(doc(db, 'teachers', email)),
+      getDoc(doc(db, 'viewers', email))
+    ]);
+    userRoles.isGuide = guideDoc.exists() && !!guideDoc.data().guide;
+    userRoles.isTeacher = guideDoc.exists();
+    userRoles.isViewer = viewerDoc.exists();
+  } catch (e) {
+    console.error(e);
+  }
+  
+  await loadBaseData();
+  setupNav();
+  render();
+});
+
+async function loadBaseData() {
+  try {
+    const [cSnap, rSnap] = await Promise.all([
+      getDocs(collection(db, 'classes')),
+      getDocs(collection(db, 'roster'))
+    ]);
+    appState.classes = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    appState.roster = rSnap.docs.map(d => ({ eid: d.id, ...d.data() }));
+    
+    if (!appState.activeClassId && appState.classes.length) {
+      appState.activeClassId = appState.classes[0].id;
+    }
+  } catch (e) {
+    toast('تعذر جلب البيانات الأولية');
+  }
 }
-$('#q').oninput=draw;
-async function imgs(cid){
-  const r=await fetch(URL_+'/rest/v1/rpc/admin_files',{method:'POST',headers:H,body:JSON.stringify({pw:PW,cid})});
-  if(!r.ok){alert('تعذّر جلب الصور');return}
-  const a=await r.json();
-  $('#mb').innerHTML=a.length?a.map(x=>`<div>${KL[x.kind]||x.kind}</div><img src="${x.data}">`).join(''):'<p>لا توجد صور لهذا الطالب</p>';
-  $('#mdl').style.display='block';
+
+function setupNav() {
+  const nav = $('#nav-bar');
+  let items = [];
+  if (userRoles.isOwner || userRoles.isGuide || userRoles.isViewer) items.push(['grades', '📝', 'سجل الدرجات']);
+  if (userRoles.isOwner || userRoles.isTeacher) items.push(['teacher', '👨‍🏫', 'دفتر المعلم']);
+  if (userRoles.isOwner) items.push(['admin', '⚙️', 'الإدارة']);
+  items.push(['emis', '📋', 'استمارة EMIS']);
+
+  nav.innerHTML = items.map(([k, icon, lbl]) => `
+    <button class="${appState.tab === k ? 'active' : ''}" onclick="switchTab('${k}')">
+      <span>${icon}</span>${lbl}
+    </button>
+  `).join('');
 }
-async function mark(id,val){
-  const r=await fetch(URL_+'/rest/v1/rpc/admin_mark',{method:'POST',headers:H,body:JSON.stringify({pw:PW,sid:id,val})});
-  if(r.ok){rows.find(x=>x.id===id).entered=val;draw()}else alert('تعذّر الحفظ');
+window.switchTab = k => { appState.tab = k; setupNav(); render(); };
+
+/* ========================================================
+   2. واجهة الدخول والحساب
+   ======================================================== */
+function renderLogin() {
+  $('#nav-bar').innerHTML = '';
+  $('#app-view').innerHTML = `
+    <div class="c" style="max-width:420px;margin:30px auto;text-align:center">
+      <h2>🏫 مرحباً بك في إدارة المدرسة</h2>
+      <p class="mu-text" style="margin:8px 0 16px">سجّل دخولك للوصول لسجل الدرجات ودفتر المعلم</p>
+      <input type="email" id="log-em" dir="ltr" placeholder="البريد الإلكتروني" style="margin-bottom:8px">
+      <input type="password" id="log-pw" dir="ltr" placeholder="كلمة المرور" style="margin-bottom:12px">
+      <button onclick="handleLogin()" style="margin-bottom:8px">تسجيل الدخول</button>
+      <button class="l" onclick="handleReset()">نسيت كلمة المرور؟</button>
+    </div>
+  `;
 }
-function csv(){
-  const q=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
-  const out=[['أُدخل بالإيمس',...fields.map(f=>f[1]),'وقت الإرسال'].map(q).join(',')];
-  rows.forEach(r=>out.push([r.entered?'نعم':'',...fields.map(f=>r[f[0]]),r.created_at].map(q).join(',')));
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\ufeff'+out.join('\r\n')],{type:'text/csv;charset=utf-8'}));
-  a.download='students-emis.csv';a.click();
+window.handleLogin = async () => {
+  const em = clean($('#log-em').value), pw = $('#log-pw').value;
+  if (!em || !pw) return toast('يرجى ملء الحقول');
+  try { await signInWithEmailAndPassword(auth, em, pw); toast('أهلاً بك ✅'); }
+  catch (e) { toast('خطأ بالدخول: ' + e.message); }
+};
+window.handleReset = async () => {
+  const em = clean($('#log-em').value);
+  if (!em) return toast('اكتب الإيميل أولاً');
+  try { await sendPasswordResetEmail(auth, em); toast('تم إرسال رابط التعيين لإيميلك'); }
+  catch (e) { toast('تعذر: ' + e.message); }
+};
+window.userModal = () => {
+  if (!currentUser) return;
+  openModal('معلومات الحساب', `
+    <p><b>الإيميل:</b> ${esc(currentUser.email)}</p>
+    <p><b>الصفة:</b> ${userRoles.isOwner ? 'المدير العام' : [userRoles.isGuide && 'مرشد صف', userRoles.isTeacher && 'معلم', userRoles.isViewer && 'معاون'].filter(Boolean).join(' · ')}</p>
+    <button class="danger" onclick="signOut(auth).then(()=>location.reload())" style="margin-top:14px">تسجيل الخروج</button>
+  `);
+};
+
+/* ========================================================
+   3. دفتر المعلم وحاسبة الدرجات (الإسلامية، العربي...)
+   ======================================================== */
+function renderTeacherView() {
+  const myClasses = userRoles.isOwner ? appState.classes : appState.classes.filter(c => {
+    return c.guide === clean(currentUser.email) || Object.values(c.subjects || {}).includes(clean(currentUser.email));
+  });
+
+  if (!myClasses.length) {
+    $('#app-view').innerHTML = `<div class="c"><p class="mu-text">لم يتم تعيين أي صف أو مادة لك بعد. راجع إدارة المدرسة.</p></div>`;
+    return;
+  }
+  const curC = myClasses.find(c => c.id === appState.activeClassId) || myClasses[0];
+  appState.activeClassId = curC.id;
+  const isSenior = ['الخامس','السادس'].includes(curC.g);
+  const mList = isSenior ? MONTHS_SENIOR : MONTHS_JUNIOR;
+
+  $('#app-view').innerHTML = `
+    <div class="c">
+      <div class="row">
+        <select onchange="appState.activeClassId=this.value;renderTeacherView()">
+          ${myClasses.map(c => `<option value="${c.id}" ${c.id === curC.id ? 'selected' : ''}>${c.g} /${c.s}</option>`).join('')}
+        </select>
+        <select onchange="appState.activeSub=this.value;renderTeacherView()">
+          ${(curC.sub || SUBJECTS).map(s => `<option ${s === appState.activeSub ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="days-bar">
+        ${mList.map((m, i) => `<button class="${i === appState.activeMonth ? 'on' : ''}" onclick="appState.activeMonth=${i};renderTeacherView()">${m}</button>`).join('')}
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <span class="pill">${appState.activeSub} — ${mList[appState.activeMonth]}</span>
+        ${(appState.activeSub === 'التربية الإسلامية' || appState.activeSub === 'اللغة العربية') ? `<span class="mu-text">حاسبة الدرجة الوزارية مفعلة تلقائياً ✨</span>` : ''}
+      </div>
+    </div>
+    <div id="teacher-students-list"></div>
+  `;
+  drawTeacherList(curC);
 }
-$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+
+function drawTeacherList(cls) {
+  const students = appState.roster.filter(r => !r.del && norm(r.g) === norm(cls.g) && norm(r.s) === norm(cls.s)).sort((a,b)=>norm(a.n).localeCompare(norm(b.n),'ar'));
+  const sub = appState.activeSub, mIdx = appState.activeMonth;
+
+  if (!students.length) {
+    $('#teacher-students-list').innerHTML = `<div class="c"><p class="mu-text">لا يوجد طلاب في هذه الشعبة.</p></div>`;
+    return;
+  }
+
+  let html = students.map((s, idx) => {
+    const k = `${cls.id}|${s.eid}|${sub}`;
+    const curVal = (appState.gradesData[k] || {})[mIdx] ?? '';
+    
+    return `
+      <div class="c" style="padding:10px 14px">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <b>${idx + 1}. ${esc(s.n)}</b>
+            <span class="mu-text" style="display:block">الرقم: ${esc(s.adm || '—')}</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;width:auto">
+            ${(sub === 'التربية الإسلامية' || sub === 'اللغة العربية') ? 
+              `<button class="l sm" onclick="openSubjectBreakdownModal('${cls.id}','${s.eid}','${esc(s.n)}','${sub}',${mIdx})">🧮 تفصيل</button>` : ''}
+            <input type="number" min="0" max="100" style="width:75px;text-align:center;font-weight:700" 
+              value="${curVal}" id="g-in-${s.eid}" onchange="saveSingleGrade('${cls.id}','${s.eid}','${sub}',${mIdx},this.value)">
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  $('#teacher-students-list').innerHTML = html;
+}
+
+// نافذة الحساب الجزئي للدرجة الشهرية (إسلامية وعربي)
+window.openSubjectBreakdownModal = (clsId, sid, sName, sub, mIdx) => {
+  const sk = `${clsId}|${sid}|${sub}|${mIdx}`;
+  const d = appState.subScores[sk] || {};
+
+  if (sub === 'التربية الإسلامية') {
+    openModal(`تفصيل الإسلامية — ${sName}`, `
+      <div class="row"><span>امتحان تحريري وشفهي (من 80):</span><input type="number" id="is-exam" max="80" value="${d.exam || ''}"></div>
+      <div class="row"><span>النشاط والمشاركة (من 20):</span><input type="number" id="is-act" max="20" value="${d.act || ''}"></div>
+      <div class="row" style="font-weight:700;font-size:15px;color:var(--pr);margin-top:8px">
+        <span>الناتج النهائي (من 100):</span> <span id="is-tot">${num(d.exam) + num(d.act) || 0}</span>
+      </div>
+    `, m => {
+      const exam = num(m.querySelector('#is-exam').value) || 0;
+      const act = num(m.querySelector('#is-act').value) || 0;
+      const total = Math.min(100, exam + act);
+      appState.subScores[sk] = { exam, act };
+      saveSingleGrade(clsId, sid, sub, mIdx, total);
+    });
+    
+    // ربط الحساب التلقائي الفوري داخل النافذة
+    setTimeout(() => {
+      const calcTot = () => {
+        const t = (num($('#is-exam').value) \vert{}\vert{} 0) + (num($('#is-act').value) || 0);
+        $('#is-tot').textContent = Math.min(100, t);
+      };
+      $('#is-exam').oninput = calcTot; $('#is-act').oninput = calcTot;
+    }, 50);
+
+  } else if (sub === 'اللغة العربية') {
+    openModal(`تفصيل اللغة العربية — ${sName}`, `
+      <div class="row"><span>قواعد (من 30):</span><input type="number" id="ar-q" max="30" value="${d.q || ''}"></div>
+      <div class="row"><span>تعبير (من 20):</span><input type="number" id="ar-t" max="20" value="${d.t || ''}"></div>
+      <div class="row"><span>إملاء (من 10):</span><input type="number" id="ar-e" max="10" value="${d.e || ''}"></div>
+      <div class="row"><span>خط (من 10):</span><input type="number" id="ar-k" max="10" value="${d.k || ''}"></div>
+      <div class="row"><span>قراءة (من 10):</span><input type="number" id="ar-r" max="10" value="${d.r || ''}"></div>
+      <div class="row"><span>دفتر (من 10):</span><input type="number" id="ar-d" max="10" value="${d.d || ''}"></div>
+      <div class="row"><span>سلوك (من 10):</span><input type="number" id="ar-s" max="10" value="${d.s || ''}"></div>
+      <div class="row" style="font-weight:700;font-size:15px;color:var(--pr);margin-top:8px">
+        <span>الناتج النهائي (من 100):</span> <span id="ar-tot">0</span>
+      </div>
+    `, m => {
+      const fields = ['q','t','e','k','r','d','s'];
+      let tot = 0; const obj = {};
+      fields.forEach(f => {
+        const v = num(m.querySelector('#ar-'+f).value) || 0;
+        obj[f] = v; tot += v;
+      });
+      tot = Math.min(100, tot);
+      appState.subScores[sk] = obj;
+      saveSingleGrade(clsId, sid, sub, mIdx, tot);
+    });
+
+    setTimeout(() => {
+      const calcAr = () => {
+        let t = 0;
+        ['q','t','e','k','r','d','s'].forEach(f => { t += (num($('#ar-'+f).value) || 0); });
+        $('#ar-tot').textContent = Math.min(100, t);
+      };
+      ['q','t','e','k','r','d','s'].forEach(f => { $('#ar-'+f).oninput = calcAr; });
+      calcAr();
+    }, 50);
+  }
+};
+
+window.saveSingleGrade = async (clsId, sid, sub, mIdx, val) => {
+  const k = `${clsId}|${sid}|${sub}`;
+  val = val === '' ? null : num(val);
+  appState.gradesData[k] = appState.gradesData[k] || {};
+  appState.gradesData[k][mIdx] = val;
+
+  const inEl = $(`#g-in-${sid}`);
+  if (inEl) inEl.value = val ?? '';
+
+  try {
+    const docId = `${sid}__${sub.replace(/\//g,'-')}`;
+    await setDoc(doc(db, 'sections', clsId, 'grades', docId), {
+      sid, sub, v: { [mIdx]: val }, u: Date.now()
+    }, { merge: true });
+    toast('تم حفظ الدرجة ✅');
+  } catch (e) {
+    toast('فشل الحفظ في السحابة');
+  }
+};
+
+/* ========================================================
+   4. سجل الدرجات لمرشد الصف والطباعة الرسمية
+   ======================================================== */
+function renderGradesView() {
+  const myClasses = userRoles.isOwner ? appState.classes : appState.classes.filter(c => c.guide === clean(currentUser.email));
+  if (!myClasses.length) {
+    $('#app-view').innerHTML = `<div class="c"><p class="mu-text">هذا القسم خاص بمرشدي الصفوف والمدير لمتابعة السجل الكامل وتصدير ورقة الدرجات الرسمية.</p></div>`;
+    return;
+  }
+  const curC = myClasses.find(c => c.id === appState.activeClassId) || myClasses[0];
+  appState.activeClassId = curC.id;
+  const isSenior = ['الخامس','السادس'].includes(curC.g);
+
+  $('#app-view').innerHTML = `
+    <div class="c">
+      <div class="row">
+        <select onchange="appState.activeClassId=this.value;loadGradesForClass('${curC.id}');renderGradesView()">
+          ${myClasses.map(c => `<option value="${c.id}" ${c.id === curC.id ? 'selected' : ''}>${c.g} / ${c.s} (مرشد الصف: ${esc(c.guide||'غير محدد')})</option>`).join('')}
+        </select>
+        <button class="l sm" onclick="exportPrintModal('${curC.id}')">🖨️ طباعة السجل</button>
+      </div>
+      <p class="mu-text">💡 ملاحظة: تعديل وحذف الشعب محصور بإدارة المدرسة فقط لحماية بيانات المعلمين.</p>
+    </div>
+    <div id="grades-table-container"></div>
+  `;
+  drawRosterSheet(curC);
+}
+
+async function loadGradesForClass(clsId) {
+  try {
+    const snap = await getDocs(collection(db, 'sections', clsId, 'grades'));
+    snap.forEach(d => {
+      const data = d.data();
+      const k = `${clsId}|${data.sid}|${data.sub}`;
+      appState.gradesData[k] = Object.assign(appState.gradesData[k] || {}, data.v || {});
+    });
+    drawRosterSheet(appState.classes.find(c => c.id === clsId));
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function calculateStudentRow(clsId, sid, sub, isSenior) {
+  const g = (appState.gradesData[`${clsId}|${sid}|${sub}`] || {});
+  const G = i => num(g[i]);
+  if (!isSenior) {
+    // صفوف أولية (الأول - الرابع)
+    return { g: Array.from({length:10}, (_,i) => G(i)) };
+  }
+  // الخامس والسادس
+  const a1 = mean([G(0), G(1), G(2), G(3)]);
+  const a2 = mean([G(5), G(6), G(7), G(8)]);
+  const annual = mean([a1, G(4), a2]);
+  const fe = G(9);
+  const fin = (annual !== null && fe !== null) ? Math.round((annual + fe) / 2) : null;
+  const sec = G(10);
+  return { g: Array.from({length:11}, (_,i) => G(i)), a1, a2, annual, fe, fin, sec, eff: sec !== null ? sec : fin };
+}
+
+function drawRosterSheet(cls) {
+  const isSenior = ['الخامس','السادس'].includes(cls.g);
+  const students = appState.roster.filter(r => !r.del && norm(r.g) === norm(cls.g) && norm(r.s) === norm(cls.s)).sort((a,b)=>norm(a.n).localeCompare(norm(b.n),'ar'));
+  const subs = cls.sub || SUBJECTS;
+
+  if (!students.length) {
+    $('#grades-table-container').innerHTML = `<div class="c"><p class="mu-text">لا يوجد طلاب بالشعبة. أضف طلاب من تبويب الإدارة.</p></div>`;
+    return;
+  }
+
+  let html = students.map((s, idx) => `
+    <div class="c">
+      <div class="row" style="justify-content:space-between">
+        <b>${idx + 1}. ${esc(s.n)} ${s.adm ? `(${esc(s.adm)})` : ''}</b>
+        <button class="l sm" onclick="editStudentModal('${s.eid}')">✏️ تعديل الطالب</button>
+      </div>
+      <div class="tw">
+        <table>
+          <tr>
+            <th>المادة</th>
+            ${isSenior ? 
+              `<th>ت1</th><th>ت2</th><th>ك1</th><th>ك2</th><th>ن1</th><th>نصف سنة</th><th>شباط</th><th>آذار</th><th>نيسان</th><th>أيار</th><th>ن2</th><th>السنوي</th><th>النهائي</th><th>النتيجة</th>` :
+              `<th>ت1</th><th>ت2</th><th>ك1</th><th>ك2</th><th>نصف سنة</th><th>شباط</th><th>آذار</th><th>نيسان</th><th>أيار</th><th>النهائي</th>`
+            }
+          </tr>
+          ${subs.map(sb => {
+            const k = calculateStudentRow(cls.id, s.eid, sb, isSenior);
+            if (isSenior) {
+              return `<tr>
+                <td style="text-align:right"><b>${esc(sb)}</b></td>
+                <td>${k.g[0]??''}</td><td>${k.g[1]??''}</td><td>${k.g[2]??''}</td><td>${k.g[3]??''}</td>
+                <td style="font-weight:700">${k.a1??''}</td><td>${k.g[4]??''}</td>
+                <td>${k.g[5]??''}</td><td>${k.g[6]??''}</td><td>${k.g[7]??''}</td><td>${k.g[8]??''}</td>
+                <td style="font-weight:700">${k.a2??''}</td><td style="font-weight:700">${k.annual??''}</td>
+                <td>${k.fe??''}</td><td class="${k.eff !== null && k.eff < 50 ? 'f' : ''}" style="font-weight:700">${k.eff??''}</td>
+              </tr>`;
+            } else {
+              return `<tr>
+                <td style="text-align:right"><b>${esc(sb)}</b></td>${k.g.map(val => `<td>${val ?? ''}</td>`).join('')}
+              </tr>`;
+            }
+          }).join('')}
+        </table>
+      </div>
+    </div>
+  `).join('');
+
+  $('#grades-table-container').innerHTML = html;
+}
+
+// تعديل بيانات واسم الطالب بدون مس درجاته
+window.editStudentModal = eid => {
+  const s = appState.roster.find(r => r.eid === eid);
+  if (!s) return;
+  openModal('تعديل بيانات الطالب', `
+    <div class="row"><span>الاسم الكامل:</span><input id="ed-name" value="${esc(s.n)}"></div>
+    <div class="row"><span>رقم القبول:</span><input id="ed-adm" value="${esc(s.adm || '')}"></div>
+    <div class="row"><span>ملاحظات:</span><input id="ed-nt" value="${esc(s.nt || '')}"></div>
+  `, async m => {
+    const newName = m.querySelector('#ed-name').value.trim();
+    const newAdm = m.querySelector('#ed-adm').value.trim();
+    const newNt = m.querySelector('#ed-nt').value.trim();
+    if (!newName) return toast('الاسم لا يمكن أن يكون فارغاً');
+
+    s.n = newName; s.adm = newAdm; s.nt = newNt;
+    await updateDoc(doc(db, 'roster', eid), { n: newName, adm: newAdm, nt: newNt, u: Date.now() });
+    toast('تم تعديل بيانات الطالب بنجاح ✅');
+    render();
+  });
+};
+
+/* ========================================================
+   5. الطباعة الرسمية للدفتر الوزاري A4 المطابق للمستندات
+   ======================================================== */
+window.exportPrintModal = clsId => {
+  const cls = appState.classes.find(c => c.id === clsId);
+  const info = appState.schoolInfo;
+
+  openModal('🖨️ طباعة السجل الرسمي', `
+    <div class="row"><span>السنة الدراسية:</span><input id="p-year" value="${esc(info.academicYear)}"></div>
+    <div class="row"><span>اسم مرشد الصف:</span><input id="p-guide" value="${esc(info.guideName || cls.guideName || '')}"></div>
+    <div class="row"><span>اسم المدير:</span><input id="p-principal" value="${esc(info.principalName)}"></div>
+    <div class="row"><span>اسم المدرسة:</span><input id="p-school" value="${esc(info.schoolName)}"></div>
+    <button style="margin-top:12px" onclick="triggerPrint('${clsId}')">🖨️ بدء الطباعة (A4)</button>
+  `);
+};
+
+window.triggerPrint = clsId => {
+  const cls = appState.classes.find(c => c.id === clsId);
+  const year = $('#p-year').value.trim();
+  const guide = $('#p-guide').value.trim();
+  const princ = $('#p-principal').value.trim();
+  const school = $('#p-school').value.trim();
+
+  // حفظ الأسماء في التخزين المحلي لعدم تكرار كتابتها
+  appState.schoolInfo = { academicYear: year, guideName: guide, principalName: princ, schoolName: school };
+  localStorage.setItem('sch_info', JSON.stringify(appState.schoolInfo));
+
+  const isSenior = ['الخامس','السادس'].includes(cls.g);
+  const students = appState.roster.filter(r => !r.del && norm(r.g) === norm(cls.g) && norm(r.s) === norm(cls.s)).sort((a,b)=>norm(a.n).localeCompare(norm(b.n),'ar'));
+  const subs = cls.sub || SUBJECTS;
+
+  let pagesHtml = students.map((s, idx) => {
+    return isSenior ? generateSeniorA4(cls, s, idx + 1, subs, year, guide, princ) : generateJuniorA4(cls, s, idx + 1, subs, year, guide, princ, school);
+  }).join('');
+
+  $('#print-area').innerHTML = pagesHtml;
+  setTimeout(() => { window.print(); }, 200);
+};
+
+// توليد ورقة الخامس والسادس (مطابقة 100% للنموذج المرفق)
+function generateSeniorA4(cls, s, seq, subs, year, guide, princ) {
+  const V = txt => `<th class="sub-blue"><span class="vt">${txt}</span></th>`;
+  
+  const rows = subs.map(sb => {
+    const k = calculateStudentRow(cls.id, s.eid, sb, true);
+    return `
+      <tr>
+        <td class="sub-name">${esc(sb)}</td>
+        <td>${k.g[0]??''}</td><td>${k.g[1]??''}</td><td>${k.g[2]??''}</td><td>${k.g[3]??''}</td>
+        <td><b>${k.a1??''}</b></td><td>${k.g[4]??''}</td>
+        <td>${k.g[5]??''}</td><td>${k.g[6]??''}</td><td>${k.g[7]??''}</td><td>${k.g[8]??''}</td>
+        <td><b>${k.a2??''}</b></td><td><b>${k.annual??''}</b></td><td>${k.fe??''}</td>
+        <td><b>${k.fin??''}</b></td><td>${k.sec??''}</td><td><b>${k.eff??''}</b></td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="a4-page">
+      <div class="p-top">
+        <div class="p-box p-title">
+          <h2>المعدل الشهري والسنوي للمدارس الابتدائية<br>لصفي الخامس والسادس</h2>
+          <span>لسنة ${esc(year)}</span>
+        </div>
+        <div class="p-no">${seq}</div>
+        <div class="p-box p-info">
+          <div><b>الاسم:</b> ${esc(s.n)}</div>
+          <div><b>الصف:</b> ${esc(cls.g)} &nbsp;&nbsp; <b>الشعبة:</b> ${esc(cls.s)}</div>
+          <div><b>الرقم:</b> ${esc(s.adm || seq)}</div>
+        </div>
+      </div>
+
+      <div class="p-table-wrap">
+        <table class="p-table">
+          <tr>
+            <th rowspan="2" class="blue-hd" style="width:18%">الدروس</th>
+            <th colspan="5" class="blue-hd">النصف الأول</th>
+            <th rowspan="2" class="sub-blue"><span class="vt">امتحان نصف السنة</span></th>
+            <th colspan="5" class="blue-hd">النصف الثاني</th>
+            ${V('المعدل السنوي')}
+            ${V('الامتحانات النهائية')}
+            ${V('الدرجة النهائية')}
+            ${V('امتحان الدور الثاني')}
+            ${V('الدرجة الأخيرة')}
+          </tr>
+          <tr>
+            ${V('تشرين الأول')}${V('تشرين الثاني')}${V('كانون الأول')}${V('كانون الثاني')}${V('معدل النصف الأول')}
+            ${V('شباط')}${V('آذار')}${V('نيسان')}${V('أيار')}${V('معدل النصف الثاني')}
+          </tr>
+          ${rows}
+        </table>
+      </div>
+
+      <div class="p-sums">
+        <table class="p-table">
+          <tr><td class="sub-name" style="width:18%">المجموع</td>${'<td></td>'.repeat(16)}</tr>
+          <tr><td class="sub-name">النتيجة</td>${'<td></td>'.repeat(16)}</tr>
+        </table>
+      </div>
+
+      <div class="p-footer">
+        <div class="p-f-box p-f-lbl">نتيجة الامتحان</div><div class="p-f-box p-f-val"></div>
+        <div class="p-f-box p-f-lbl">مرشد الصف</div><div class="p-f-box p-f-val">${esc(guide)}</div>
+        <div class="p-f-box p-f-lbl">المدير</div><div class="p-f-box p-f-val">${esc(princ)}</div>
+      </div>
+    </div>
+  `;
+}
+
+// توليد ورقة الصفوف الأولية (الأول - الرابع مطابقة 100% للنموذج المرفق)
+function generateJuniorA4(cls, s, seq, subs, year, guide, princ, school) {
+  const V = txt => `<th class="sub-blue"><span class="vt">${txt}</span></th>`;
+  
+  const rows = subs.map(sb => {
+    const k = calculateStudentRow(cls.id, s.eid, sb, false);
+    return `
+      <tr>
+        <td class="sub-name">${esc(sb)}</td>
+        <td>${k.g[0]??''}</td><td>${k.g[1]??''}</td><td>${k.g[2]??''}</td><td>${k.g[3]??''}</td>
+        <td style="background:#eef2fb">${k.g[4]??''}</td>
+        <td>${k.g[5]??''}</td><td>${k.g[6]??''}</td><td>${k.g[7]??''}</td><td>${k.g[8]??''}</td>
+        <td style="background:#fbe9e5">${k.g[9]??''}</td>
+        <td></td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="a4-page">
+      <div class="p-top">
+        <div class="p-box p-info" style="flex:1">
+          <div><b>إدارة مدرسة:</b> ${esc(school)}</div>
+        </div>
+        <div class="p-box p-title" style="flex:1.5">
+          <h2>سجل الدرجات<br>للصفوف الأولية</h2>
+          <span>لسنة ${esc(year)}</span>
+        </div>
+        <div class="p-box p-info" style="flex:1.2">
+          <div><b>الاسم:</b> ${esc(s.n)}</div>
+          <div><b>الصف:</b> ${esc(cls.g)} / ${esc(cls.s)}</div>
+          <div><b>التسلسل:</b> ${seq} &nbsp; <b>رقم القبول:</b> ${esc(s.adm || '—')}</div>
+        </div>
+      </div>
+
+      <div class="p-table-wrap">
+        <table class="p-table">
+          <tr>
+            <th class="blue-hd" style="width:20%">الدروس</th>
+            ${V('تشرين الأول')}${V('تشرين الثاني')}${V('كانون الأول')}${V('كانون الثاني')}
+            ${V('امتحان نصف السنة')}
+            ${V('شباط')}${V('آذار')}${V('نيسان')}${V('أيار')}
+            ${V('الامتحان النهائي')}
+            <th class="blue-hd" style="width:18%">الملاحظات</th>
+          </tr>
+          ${rows}
+          <tr><td class="sub-name">المجموع</td>${'<td></td>'.repeat(10)}<td></td></tr>
+          <tr><td class="sub-name">النتيجة</td>${'<td></td>'.repeat(10)}<td></td></tr>
+        </table>
+      </div>
+
+      <div class="p-footer">
+        <div class="p-f-box p-f-lbl">النتيجة</div><div class="p-f-box p-f-val"></div>
+        <div class="p-f-box p-f-lbl">مرشد الصف</div><div class="p-f-box p-f-val">${esc(guide)}</div>
+        <div class="p-f-box p-f-lbl">المدير</div><div class="p-f-box p-f-val">${esc(princ)}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ========================================================
+   6. لوحة تحكم الإدارة (المدير فقط)
+   ======================================================== */
+function renderAdminView() {
+  if (!userRoles.isOwner) {
+    $('#app-view').innerHTML = `<div class="c"><p class="mu-text">هذا القسم خاص بالمدير العام فقط.</p></div>`;
+    return;
+  }
+
+  $('#app-view').innerHTML = `
+    <div class="c">
+      <h3>🏛️ إدارة الشعب وتعيين الكادر</h3>
+      <p class="mu-text">من هنا يمكنك إضافة الشُعب وتحديد مرشد الصف ومعلمي المواد، ولا يمكن لأي معلم حذفها.</p>
+      <div class="row" style="margin-top:10px">
+        <select id="ad-g">${GRADES.map(g => `<option>${g}</option>`).join('')}</select>
+        <select id="ad-s">${SECTIONS.map(s => `<option>${s}</option>`).join('')}</select>
+        <button class="sm" onclick="addNewClass()">➕ إضافة شعبة</button>
+      </div>
+    </div>
+    <div id="admin-classes-list"></div>
+  `;
+  drawAdminClasses();
+}
+
+function drawAdminClasses() {
+  $('#admin-classes-list').innerHTML = appState.classes.map(c => `
+    <div class="c">
+      <div class="row" style="justify-content:space-between">
+        <b>${c.g} / ${c.s}</b>
+        <div>
+          <button class="l sm" onclick="assignClassTeachers('${c.id}')">👥 تعيين الكادر والمواد</button>
+          <button class="danger sm" onclick="deleteClassByAdmin('${c.id}')">🗑 حذف الشعبة</button>
+        </div>
+      </div>
+      <p class="mu-text">مرشد الصف: ${esc(c.guide || 'لم يُحدد')} — المواد: ${(c.sub || SUBJECTS).length} مادة</p>
+    </div>
+  `).join('');
+}
+
+window.addNewClass = async () => {
+  const g = $('#ad-g').value, s = $('#ad-s').value;
+  const id = `${g}_${s}`;
+  if (appState.classes.some(c => c.id === id)) return toast('الشعبة موجودة مسبقاً');
+  const newC = { id, g, s, guide: '', guideName: '', subjects: {}, sub: SUBJECTS };
+  await setDoc(doc(db, 'classes', id), newC);
+  appState.classes.push(newC);
+  toast('تمت إضافة الشعبة ✅');
+  drawAdminClasses();
+};
+
+window.deleteClassByAdmin = id => {
+  openModal('تأكيد حذف الشعبة', '<p>هل أنت متأكد من حذف هذه الشعبة نهائياً من النظام؟</p>', async () => {
+    await deleteDoc(doc(db, 'classes', id));
+    appState.classes = appState.classes.filter(c => c.id !== id);
+    toast('تم حذف الشعبة ✅');
+    drawAdminClasses();
+  }, 'نعم، احذف');
+};
+
+window.assignClassTeachers = clsId => {
+  const c = appState.classes.find(x => x.id === clsId);
+  const subs = c.subjects || {};
+  
+  openModal(`تعيين كادر: ${c.g} / ${c.s}`, `
+    <div class="row"><span>إيميل مرشد الصف:</span><input id="as-guide" dir="ltr" value="${esc(c.guide || '')}"></div>
+    <div class="row"><span>اسم مرشد الصف:</span><input id="as-gname" value="${esc(c.guideName || '')}"></div>
+    <hr style="margin:10px 0;border:0;border-top:1px solid var(--bd)">
+    <p class="mu-text" style="margin-bottom:8px">معلم كل مادة (اكتب إيميل المعلم):</p>
+    ${SUBJECTS.map((sb, i) => `
+      <div class="row">
+        <span style="min-width:130px;font-size:12px">${sb}:</span>
+        <input class="as-sub" data-sub="${sb}" dir="ltr" placeholder="إيميل المعلم" value="${esc(subs[sb] || '')}">
+      </div>
+    `).join('')}
+  `, async m => {
+    const guide = clean(m.querySelector('#as-guide').value);
+    const guideName = m.querySelector('#as-gname').value.trim();
+    const newSubs = {};
+    m.querySelectorAll('.as-sub').forEach(inp => {
+      const em = clean(inp.value);
+      if (em) newSubs[inp.dataset.sub] = em;
+    });
+
+    c.guide = guide; c.guideName = guideName; c.subjects = newSubs;
+    await setDoc(doc(db, 'classes', clsId), { guide, guideName, subjects: newSubs, u: Date.now() }, { merge: true });
+    
+    // مزامنة سجلات المعلمين
+    if (guide) await setDoc(doc(db, 'teachers', guide), { guide: true }, { merge: true });
+    for (const em of Object.values(newSubs)) {
+      await setDoc(doc(db, 'teachers', em), { isTeacher: true }, { merge: true });
+    }
+    toast('تم حفظ تعيينات الكادر ✅');
+    drawAdminClasses();
+  });
+};
+
+/* ========================================================
+   7. استمارة الطلاب EMIS المدمجة
+   ======================================================== */
+function renderEmisView() {
+  $('#app-view').innerHTML = `
+    <div class="c">
+      <h3>📋 استمارة تسجيل طالب جديد</h3>
+      <p class="mu-text">إضافة مباشرة لجدول المدرسة العام</p>
+      <div class="row" style="margin-top:10px"><span>الاسم الرباعي واللقب:</span><input id="em-name"></div>
+      <div class="row"><span>الصف:</span><select id="em-g">${GRADES.map(g=>`<option>${g}</option>`).join('')}</select></div>
+      <div class="row"><span>الشعبة:</span><select id="em-s">${SECTIONS.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div class="row"><span>رقم القبول (اختياري):</span><input id="em-adm"></div>
+      <button onclick="saveEmisStudent()" style="margin-top:10px">➕ تسجيل الطالب</button>
+    </div>
+  `;
+}
+window.saveEmisStudent = async () => {
+  const n = $('#em-name').value.trim();
+  const g = $('#em-g').value, s = $('#em-s').value;
+  const adm = $('#em-adm').value.trim();
+  if (!n) return toast('اكتب اسم الطالب');
+
+  const eid = 'm' + Date.now();
+  const obj = { eid, n, g, s, adm, nt: '', u: Date.now() };
+  await setDoc(doc(db, 'roster', eid), obj);
+  appState.roster.push(obj);
+  toast('تم تسجيل الطالب بنجاح ✅');
+  $('#em-name').value = ''; $('#em-adm').value = '';
+};
+
+/* ========================================================
+   التشغيل والتوجيه العام
+   ======================================================== */
+function render() {
+  if (!currentUser) return renderLogin();
+  switch (appState.tab) {
+    case 'grades': renderGradesView(); break;
+    case 'teacher': renderTeacherView(); break;
+    case 'admin': renderAdminView(); break;
+    case 'emis': renderEmisView(); break;
+  }
+}
+
+window.syncNow = async () => {
+  toast('جاري المزامنة 🔄');
+  await loadBaseData();
+  render();
+  toast('تمت المزامنة بنجاح ✅');
+};
 </script>
 </body>
 </html>
