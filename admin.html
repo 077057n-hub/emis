@@ -11,7 +11,7 @@ body{margin:0 auto;background:var(--bg);font-family:Tahoma,Arial,sans-serif;padd
 h1{font-size:20px;color:var(--g)}
 a{color:var(--g)}
 .c{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
-input,select,button{font:inherit;padding:9px 10px;border-radius:8px;border:1px solid #bbb;width:100%;margin:4px 0}
+input,select,button,textarea{font:inherit;padding:9px 10px;border-radius:8px;border:1px solid #bbb;width:100%;margin:4px 0}
 button{background:var(--g);color:#fff;border:0;font-weight:700;cursor:pointer}
 button.l{background:#fff;color:var(--g);border:1px solid var(--g)}
 .r{display:flex;gap:6px;align-items:center;border-bottom:1px solid #eee;padding:6px 0}
@@ -71,7 +71,7 @@ Object.assign(window,{
  su:()=>ok(()=>createUserWithEmailAndPassword(auth,clean($('#em').value),$('#pw').value))
 });
 onAuthStateChanged(auth,u=>{
- user=u;role=null;SECS=null;SC=null;render();
+ user=u;role=null;CLSL=null;SC=null;render();
  if(!u)return;
  (async()=>{
   try{await getDocs(query(collection(db,'teachers'),limit(1)));role='admin'}
@@ -137,7 +137,7 @@ window.delT=e=>{if(confirm('حذف المعلم؟'))ok(async()=>{await deleteDoc
 /* ---- الطلاب ---- */
 async function vSt(){
  await loadR();
- $('#v').innerHTML=`<div class="r"><select id="fg" onchange="drawS()">${GR.map(g=>`<option>${g}</option>`).join('')}</select><select id="fs" onchange="drawS()">${[...SEC,'—'].map(s=>`<option>${s}</option>`).join('')}</select></div><div class="c"><input id="an" placeholder="اسم طالب جديد (للصف والشعبة المختارين)"><button class="l" onclick="addS()">➕ إضافة طالب يدوياً</button></div><div id="sl"></div>`;
+ $('#v').innerHTML=`<div class="r"><select id="fg" onchange="drawS()">${GR.map(g=>`<option>${g}</option>`).join('')}</select><select id="fs" onchange="drawS()">${[...SEC,'—'].map(s=>`<option>${s}</option>`).join('')}</select></div><div class="c"><p class="m">الصق أسماء الطلاب، كل اسم بسطر. تنضاف للصف والشعبة المختارين بالأعلى، وتترتب أبجدياً وتنرقّم تلقائياً، والمكرر يتجاهل.</p><textarea id="an" rows="6" placeholder="مثال:&#10;أحمد علي حسن&#10;باقر جميل نعيم"></textarea><button class="l" onclick="addS()">➕ إضافة الأسماء</button></div><div id="sl"></div>`;
  drawS();
 }
 window.drawS=()=>{
@@ -145,10 +145,20 @@ window.drawS=()=>{
  $('#sl').innerHTML=`<p class="m">${L.length} طالب</p>`+L.map((x,i)=>`<div class="r"><span class="m">${i+1}</span><b>${esc(x.n)}</b>${SEC.filter(y=>y!==x.s).map(y=>`<button class="l" onclick="mvS('${x.eid}','${y}')">→ ${y}</button>`).join('')}<button class="l" onclick="rmS('${x.eid}')">🗑</button></div>`).join('');
 };
 window.addS=()=>ok(async()=>{
- const n=$('#an').value.trim();if(!n)return;
- if(roster.some(x=>!x.del&&norm(x.n)===norm(n)))return msg('الاسم موجود مسبقاً');
- const x={n,g:$('#fg').value,s:$('#fs').value,u:Date.now()},id='m'+Date.now();
- await setDoc(doc(db,'roster',id),x);roster.push({eid:id,...x});$('#an').value='';drawS();
+ const g=$('#fg').value,s=$('#fs').value;
+ const names=$('#an').value.split('\n').map(x=>x.replace(/^[\s\d٠-٩\.\-\)\(،:]+/,'').replace(/\s+/g,' ').trim()).filter(Boolean);
+ if(!names.length)return msg('الصق الأسماء أولاً');
+ const seen=new Set(roster.filter(x=>!x.del).map(x=>norm(x.n)));
+ const add=[];let dup=0;
+ names.forEach(n=>{const k=norm(n);if(seen.has(k)){dup++;return}seen.add(k);add.push(n)});
+ const t=Date.now();
+ for(let i=0;i<add.length;i+=400){
+  const b=writeBatch(db);
+  add.slice(i,i+400).forEach((n,j)=>{const id='m'+t.toString(36)+(i+j).toString(36),x={n,g,s,u:t};b.set(doc(db,'roster',id),x);roster.push({eid:id,...x})});
+  await b.commit();
+ }
+ $('#an').value='';drawS();
+ msg(`أضيف ${add.length} طالب إلى ${g} / ${s}${dup?` — ${dup} مكرر تم تجاهله`:''} ✅`);
 });
 window.mvS=(eid,to)=>ok(async()=>{
  const x=roster.find(r=>r.eid===eid),from=x.s;
@@ -177,93 +187,55 @@ async function vVw(){
 window.saveV=()=>ok(async()=>{const e=clean($('#ve').value);if(!e)return msg('اكتب الإيميل');await setDoc(doc(db,'viewers',e),{at:Date.now()});vVw()});
 window.delV=e=>{if(confirm('حذف المعاون؟'))ok(async()=>{await deleteDoc(doc(db,'viewers',e));vVw()})};
 
-/* ---- سجلات الدرجات لكل الشعب ---- */
+/* ---- سجلات الدرجات لكل الشعب (النظام الجديد) ---- */
 const CO=['تشرين 1','تشرين 2','كانون 1','كانون 2','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];
-let SECS=null,SC=null,GM=0,GRD={};
+let CLSL=null,SC=null,GM=0,GRD={};
 const nm=x=>x===undefined||x===null||x===''||isNaN(+x)?null:+x;
 const mean=a=>{a=a.filter(x=>x!==null);return a.length?Math.round(a.reduce((p,q)=>p+q,0)/a.length):null};
+const EG=g=>['الأول','الثاني','الثالث','الرابع'].includes(g);
+const rosOf=c=>roster.filter(r=>!r.del&&r.g===c.g&&r.s===c.s).sort(by);
 function calc(sid,sb){
  const g=Array.from({length:11},(_,i)=>nm((GRD[sid+'|'+sb]||{})[i]));
- const a1=mean([g[0],g[1],g[2],g[3]]),a2=mean([g[5],g[6],g[7],g[8]]),annual=mean([a1,g[4],a2]),fe=g[9];
- const fin=annual!==null&&fe!==null?Math.round((annual+fe)/2):null,sec=g[10];
- return {g,a1,a2,annual,fe,fin,eff:sec!==null?sec:fin};
+ if(EG(SC.g))return {g,eff:mean(g.slice(0,10))};
+ const a1=mean(g.slice(0,4)),a2=mean(g.slice(5,9)),annual=mean([a1,g[4],a2]),fin=annual!==null&&g[9]!==null?Math.round((annual+g[9])/2):null;
+ return {g,a1,a2,annual,eff:g[10]!==null?g[10]:fin};
 }
 async function vGr(){
- if(!SECS)SECS=(await getDocs(collection(db,'sections'))).docs.map(d=>({code:d.id,...d.data()}));
+ if(!CLSL){await loadR();CLSL=(await getDocs(collection(db,'classes'))).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>GR.indexOf(a.g)-GR.indexOf(b.g)||String(a.s).localeCompare(b.s,'ar'))}
  if(SC)return vSec();
- SECS.sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar'));
- $('#v').innerHTML=`<p class="m">${SECS.length} شعبة مربوطة بسجل الدرجات</p>`
-  +(SECS.length?SECS.map(s=>`<div class="r" onclick="openSec('${s.code}')" style="cursor:pointer"><b>${esc(s.name||s.code)}<br><span class="m">${(s.st||[]).length} طالب — ${(s.sub||[]).length} مادة</span></b><button class="l">فتح</button></div>`).join(''):'<p class="m">لا توجد شعب مربوطة بعد. المرشد يضغط 🔗 بسجل الدرجات لربط شعبته.</p>')
+ $('#v').innerHTML=`<p class="m">${CLSL.length} شعبة معيّنة</p>`
+  +(CLSL.length?CLSL.map(c=>`<div class="r" onclick="openSec('${c.id}')" style="cursor:pointer"><b>${esc(c.g)} / ${esc(c.s)}<br><span class="m">${rosOf(c).length} طالب — ${Object.keys(c.subjects||{}).length} مادة — مرشد: ${esc(c.guide||'—')}</span></b><button class="l">فتح</button></div>`).join(''):'<p class="m">لا توجد شعب معيّنة. عيّنها من تبويب «تعيين الشعب».</p>')
   +'<button class="l" onclick="reloadSec()">🔄 تحديث</button>';
 }
-window.reloadSec=()=>{SECS=null;SC=null;vGr()};
+window.reloadSec=()=>{CLSL=null;SC=null;vGr()};
 window.backSec=()=>{SC=null;vGr()};
 window.setGM=i=>{GM=i;vSec()};
-window.openSec=code=>ok(async()=>{
- SC=SECS.find(s=>s.code===code);GM=0;GRD={};
- (await getDocs(collection(db,'sections',code,'grades'))).forEach(d=>{const o=d.data();GRD[o.sid+'|'+o.sub]=o.v||{}});
+window.openSec=id=>ok(async()=>{
+ SC=CLSL.find(c=>c.id===id);GM=0;GRD={};
+ (await getDocs(collection(db,'classes',id,'grades'))).forEach(d=>{const o=d.data();GRD[o.sid+'|'+o.sub]=o.v||{}});
  vSec();
 });
 function vSec(){
- const c=SC,L=(c.st||[]).slice().sort(by),subs=c.sub||[];
+ const c=SC,L=rosOf(c),subs=Object.keys(c.subjects||{}),early=EG(c.g),pass=early?5:50,mon=early?CO.slice(0,10):CO;
+ if(GM>=mon.length)GM=0;
  let tot=0,fil=0;
- const rows=L.map((s,i)=>`<tr><td style="text-align:right"><a href="#" onclick="stuRec('${s.id}');return false">${i+1}. ${esc(s.n)}</a></td>`+subs.map(sb=>{const x=nm((GRD[s.id+'|'+sb]||{})[GM]);tot++;if(x!==null)fil++;return `<td${x!==null&&x<50?' class="f"':''}>${x===null?'–':x}</td>`}).join('')+'</tr>').join('');
- const avg=subs.map(sb=>{const a=L.map(s=>nm((GRD[s.id+'|'+sb]||{})[GM])).filter(x=>x!==null);return `<td><b>${a.length?(a.reduce((p,q)=>p+q,0)/a.length).toFixed(1):'–'}</b></td>`}).join('');
- $('#v').innerHTML=`<button class="l" onclick="backSec()">⬅️ كل الشعب</button><h3 style="margin:8px 0">${esc(c.name||c.code)}</h3>`
-  +`<div style="display:flex;gap:6px;overflow:auto">${CO.map((x,i)=>`<button class="l" style="width:auto;${i===GM?'background:#1f4d43;color:#fff':''}" onclick="setGM(${i})">${x}</button>`).join('')}</div>`
-  +`<p class="m">اكتمال الدرجات: ${fil} من ${tot} خانة — الأحمر أقل من 50 — اضغط اسم الطالب لسجله الكامل</p>`
-  +`<div class="tw"><table><tr><th>الطالب</th>${subs.map(x=>`<th>${esc(x)}</th>`).join('')}</tr>${rows}<tr><td>معدل الشعبة</td>${avg}</tr></table></div>`;
+ const rows=L.map((s,i)=>`<tr><td style="text-align:right"><a href="#" onclick="stuRec('${s.eid}');return false">${i+1}. ${esc(s.n)}</a></td>`+subs.map(sb=>{const x=nm((GRD[s.eid+'|'+sb]||{})[GM]);tot++;if(x!==null)fil++;return `<td${x!==null&&x<pass?' class="f"':''}>${x===null?'–':x}</td>`}).join('')+'</tr>').join('');
+ const avg=subs.map(sb=>{const a=L.map(s=>nm((GRD[s.eid+'|'+sb]||{})[GM])).filter(x=>x!==null);return `<td><b>${a.length?(a.reduce((p,q)=>p+q,0)/a.length).toFixed(1):'–'}</b></td>`}).join('');
+ $('#v').innerHTML=`<button class="l" onclick="backSec()">⬅️ كل الشعب</button><h3 style="margin:8px 0">${esc(c.g)} / ${esc(c.s)}</h3><p class="m">مرشد الصف: ${esc(c.guide||'—')}</p>`
+  +`<div style="display:flex;gap:6px;overflow:auto">${mon.map((x,i)=>`<button class="l" style="width:auto;${i===GM?'background:#1f4d43;color:#fff':''}" onclick="setGM(${i})">${x}</button>`).join('')}</div>`
+  +`<p class="m">اكتمال الدرجات: ${fil} من ${tot} خانة — الأحمر أقل من ${pass} — اضغط اسم الطالب لسجله</p>`
+  +`<div class="tw"><table><tr><th>الطالب</th>${subs.map(x=>`<th>${esc(x)}<br><span class="m">${esc((c.subjects[x]||'—').split('@')[0])}</span></th>`).join('')}</tr>${rows}<tr><td>معدل الشعبة</td>${avg}</tr></table></div>`;
 }
 window.vSec=vSec;
-window.stuRec=sid=>{
- const c=SC,s=(c.st||[]).find(x=>x.id===sid),subs=c.sub||[];
- const R=subs.map(sb=>({sb,k:calc(sid,sb)}));
- let n=0,any=false;R.forEach(r=>{if(r.k.eff!==null){any=true;if(r.k.eff<50)n++}});
+window.stuRec=eid=>{
+ const c=SC,s=roster.find(x=>x.eid===eid),subs=Object.keys(c.subjects||{}),early=EG(c.g),pass=early?5:50;
+ const R=subs.map(sb=>({sb,k:calc(eid,sb)}));
+ let n=0,any=false;R.forEach(r=>{if(r.k.eff!==null){any=true;if(r.k.eff<pass)n++}});
  const res=!any?'—':n===0?'ناجح':n<=3?'إكمال':'راسب';
- $('#v').innerHTML=`<button class="l" onclick="vSec()">⬅️ رجوع للشعبة</button><h3 style="margin:8px 0">${esc(s.n)}</h3><p class="m">${esc(c.name||'')} — النتيجة: <b>${res}</b>${n?' (راسب بـ '+n+' مواد)':''}</p>`
-  +`<div class="tw"><table><tr><th>المادة</th>${CO.map(x=>`<th>${x}</th>`).join('')}<th>معدل ن1</th><th>معدل ن2</th><th>السنوي</th><th>النهائية</th></tr>`
-  +R.map(({sb,k})=>`<tr><td style="text-align:right">${esc(sb)}</td>${k.g.map(x=>`<td>${x===null?'':x}</td>`).join('')}<td><b>${k.a1??''}</b></td><td><b>${k.a2??''}</b></td><td><b>${k.annual??''}</b></td><td${k.eff!==null&&k.eff<50?' class="f"':''}><b>${k.eff??''}</b></td></tr>`).join('')+'</table></div>';
+ $('#v').innerHTML=`<button class="l" onclick="vSec()">⬅️ رجوع للشعبة</button><h3 style="margin:8px 0">${esc(s.n)}</h3><p class="m">${esc(c.g)} / ${esc(c.s)} — النتيجة: <b>${res}</b>${n?' (راسب بـ '+n+' مواد)':''}</p>`
+  +`<div class="tw"><table><tr><th>المادة</th>${CO.slice(0,early?10:11).map(x=>`<th>${x}</th>`).join('')}${early?'<th>المعدل</th>':'<th>ن1</th><th>ن2</th><th>السنوي</th><th>النهائية</th>'}</tr>`
+  +R.map(({sb,k})=>`<tr><td style="text-align:right">${esc(sb)}</td>${k.g.slice(0,early?10:11).map(x=>`<td>${x===null?'':x}</td>`).join('')}${early?'':`<td>${k.a1??''}</td><td>${k.a2??''}</td><td>${k.annual??''}</td>`}<td${k.eff!==null&&k.eff<pass?' class="f"':''}><b>${k.eff??''}</b></td></tr>`).join('')+'</table></div>';
 };
-
-/* ---- تعيين الشعب: مرشد الصف ومعلم كل مادة ---- */
-let CLD={};
-const DEFS=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','التربية الفنية والنشيد','التربية الرياضية'];
-async function vCl(){
- CLD={};(await getDocs(collection(db,'classes'))).forEach(d=>CLD[d.id]=d.data());
- $('#v').innerHTML='<p class="m">اختر الشعبة لتحديد مرشد صفها ومعلم كل مادة (✓ = معيّنة). مرشد الصف يعدّل كل درجات شعبته، ومعلم المادة يعدّل مادته فقط ويشاهد الباقي.</p>'
-  +GR.map(g=>`<div class="r"><b>${g}</b>${SEC.map(s=>{const id=g+'_'+s;return `<button class="l" onclick="edCl('${id}')">${s}${CLD[id]?' ✓':''}</button>`}).join('')}</div>`).join('')
-  +'<div id="cle"></div>';
-}
-window.edCl=id=>{
- const [g,s]=id.split('_'),c=CLD[id]||{},sb=c.subjects||{};
- const on=x=>c.subjects?(x in sb):DEFS.includes(x);
- $('#cle').innerHTML=`<div class="c"><h3 style="margin-bottom:6px">${g} / ${s}</h3><p class="m">مرشد الصف (إيميل)</p><input id="cg" type="email" dir="ltr" value="${esc(c.guide||'')}">`
-  +'<p class="m">علّم المواد الي تُدرَّس بهذي الشعبة، واكتب إيميل معلم كل مادة:</p>'
-  +SUBS.map((x,i)=>`<div class="r"><label class="k" style="min-width:150px"><input type="checkbox" class="cs" data-i="${i}" ${on(x)?'checked':''}> ${esc(x)}</label><input type="email" dir="ltr" class="ct" data-i="${i}" placeholder="إيميل المعلم" value="${esc(sb[x]||'')}" style="flex:1;margin:0"></div>`).join('')
-  +`<button onclick="saveCl('${id}')">حفظ تعيين الشعبة</button></div>`;
- $('#cle').scrollIntoView({behavior:'smooth'});
-};
-window.saveCl=id=>ok(async()=>{
- const [g,s]=id.split('_');
- const guide=clean($('#cg').value),subjects={};
- document.querySelectorAll('.cs').forEach(cb=>{
-  if(cb.checked){const i=cb.dataset.i;subjects[SUBS[i]]=clean(document.querySelector('.ct[data-i="'+i+'"]').value)}
- });
- const members=[...new Set([guide,...Object.values(subjects)].filter(Boolean))];
- const oldM=(CLD[id]||{}).members||[];
- await setDoc(doc(db,'classes',id),{g,s,guide,subjects,members,u:Date.now()});
- CLD[id]={g,s,guide,subjects,members};
- /* مزامنة وثائق المعلمين (تنزيل الصفوف وظهور البطاقات) */
- const T={};
- Object.values(CLD).forEach(c=>{
-  const add=(em,f)=>{if(!em)return;const t=T[em]=T[em]||{grades:new Set(),subjects:new Set(),guide:false};t.grades.add(c.g);f(t)};
-  add(c.guide,t=>{t.guide=true});
-  Object.entries(c.subjects||{}).forEach(([sb,em])=>add(em,t=>t.subjects.add(sb)));
- });
- for(const [em,t] of Object.entries(T))await setDoc(doc(db,'teachers',em),{grades:[...t.grades],subjects:[...t.subjects],guide:t.guide});
- for(const em of oldM)if(!T[em])await deleteDoc(doc(db,'teachers',em));
- msg('تم الحفظ ✅');vCl();
-});
 </script>
 </body>
 </html>

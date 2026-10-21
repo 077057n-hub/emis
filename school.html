@@ -198,11 +198,12 @@ function vGr(c){
  const tv=eid=>{const x=(o(eid).v||{})[GM];return x===undefined||x===null?'':x};
  const vals=L.map(s=>tv(s.eid)).filter(x=>x!=='').map(Number);
  const avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):'–';
+ const ms=isG()?`<div class="card"><b>📉 نواقص ${months[GM]}<div class="st mu">${subs.map(x=>{const m=L.filter(t=>{const v=((GRD[t.eid+'|'+x]||{}).v||{})[GM];return v===undefined||v===null||v===''}).length;return esc(x)+': '+(m?'ناقص '+m+' طالب':'✅ مكتمل')}).join('<br>')}</div></b></div>`:'';
  const head=`<select onchange="gs(this.value)">${subs.map(s=>`<option value="${esc(s)}"${s===GS?' selected':''}>${esc(s)}${c.subjects[s]===me?' ✏️':''}</option>`).join('')}</select>`
   +`<div class="days">${months.map((x,i)=>`<button class="${i===GM?'on':''}" onclick="gm(${i})">${x}</button>`).join('')}</div>`
   +(can?`<p class="mu">يمكنك تعديل هذه المادة — الدرجة من ${mx}${sc?' (تقسيم المادة، والمجموع هو الي يصل للمرشد)':''}.</p>`:`<div class="warn">مادة ${esc(GS)} للمشاهدة فقط${c.subjects[GS]?' — معلمها: '+esc(c.subjects[GS]):''}.</div>`)
   +`<input id="sq" placeholder="🔍 ابحث باسم الطالب" value="${esc(SQ)}" oninput="sq(this.value)">`
-  +`<div class="chips"><span>✍️ ${vals.length}/${L.length}</span><span>📊 ${avg}</span><span>❌ ${vals.filter(x=>x<pass).length}</span></div>`;
+  +`<div class="chips"><span>✍️ ${vals.length}/${L.length}</span><span>📊 ${avg}</span><span>❌ ${vals.filter(x=>x<pass).length}</span></div>`+ms;
  if(!L.length)return head+'<div class="empty"><div>👥</div>لا يوجد طلاب</div>';
  if(sc&&can){
   return head+'<div class="tw"><table><tr><th>الاسم الثلاثي</th>'+sc.map(([n,m])=>`<th>${n}<br>${m}</th>`).join('')+'<th>المجموع</th></tr>'
