@@ -49,6 +49,7 @@ const by=(a,b)=>norm(a.n).localeCompare(norm(b.n),'ar');
 const msg=t=>{const e=$('#ms');if(e)e.textContent=t};
 const ok=async f=>{try{await f()}catch(e){msg('تعذر: '+(e.code||e.message))}};
 const SUBS=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','الحاسوب','اللغة الفرنسية','التربية الفنية والنشيد','التربية الرياضية'];
+let TNM={},CLX=[],CF=null;
 let tab=location.hash==='#gr'?'gr':'imp',user=null,roster=null,prev=null,TC={},TS={},TG={};
 const loadR=async force=>{if(!roster||force)roster=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()}));return roster};
 
@@ -80,6 +81,54 @@ onAuthStateChanged(auth,u=>{
   }
   render();
  })();
+});
+
+
+/* ---- تعيين الشعب والكادر ---- */
+const syncNames=async(em,nm)=>{
+ if(!nm)return;
+ const cs=await getDocs(collection(db,'classes'));
+ for(const d of cs.docs){const c=d.data(),u={};
+  if(c.guide===em)u.guideName=nm;
+  const tn={...(c.tn||{})};let ch=false;
+  Object.entries(c.subjects||{}).forEach(([sb,x])=>{if(x===em&&tn[sb]!==nm){tn[sb]=nm;ch=true}});
+  if(ch)u.tn=tn;
+  if(Object.keys(u).length)await updateDoc(doc(db,'classes',d.id),u);
+ }
+ CLX=[];
+};
+const tLabel=e=>TNM[e]?TNM[e]+' ('+e+')':e;
+async function vCl(){
+ const [cs,ts]=await Promise.all([getDocs(collection(db,'classes')),getDocs(collection(db,'teachers'))]);
+ TNM={};ts.docs.forEach(d=>TNM[d.id]=d.data().name||'');
+ CLX=cs.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>GR.indexOf(a.g)-GR.indexOf(b.g)||String(a.s).localeCompare(b.s,'ar'));
+ if(CF)return vClForm();
+ $('#v').innerHTML=`<div class="c"><b>➕ إضافة شعبة</b><div class="r"><select id="ng">${GR.map(g=>`<option>${g}</option>`).join('')}</select><select id="ns">${SEC.map(s=>`<option>${s}</option>`).join('')}</select><button onclick="addCl()">إضافة</button></div></div>`
+  +(CLX.length?CLX.map(c=>`<div class="c"><div class="r"><b>${esc(c.g)} / ${esc(c.s)}<br><span class="m">مرشد الصف: ${esc(c.guideName||(c.guide?c.guide:'—'))}<br>${Object.keys(c.subjects||{}).length} مادة معيّنة</span></b><button class="l" onclick="editCl('${c.id}')">👥 تعيين</button><button class="l" onclick="delCl('${c.id}')">🗑</button></div></div>`).join(''):'<p class="m">لا توجد شعب. أضف شعبة من الأعلى.</p>');
+}
+window.addCl=()=>ok(async()=>{
+ const g=$('#ng').value,s=$('#ns').value,id=g+'_'+s;
+ if(CLX.some(c=>c.id===id))return msg('الشعبة موجودة مسبقاً');
+ await setDoc(doc(db,'classes',id),{g,s,guide:'',guideName:'',subjects:{},tn:{},members:[],u:Date.now()});
+ vCl();
+});
+window.delCl=id=>{if(confirm('حذف الشعبة؟ (الطلاب والدرجات المخزنة لا تُحذف من الجدول المشترك)'))ok(async()=>{await deleteDoc(doc(db,'classes',id));vCl()})};
+window.editCl=id=>{CF=CLX.find(c=>c.id===id);vClForm()};
+function vClForm(){
+ const c=CF,opts=sel=>'<option value="">— بدون —</option>'+Object.keys(TNM).sort().map(e=>`<option value="${esc(e)}"${e===sel?' selected':''}>${esc(tLabel(e))}</option>`).join('');
+ $('#v').innerHTML=`<button class="l" onclick="CF=null;vCl()">⬅️ رجوع</button><h3 style="margin:8px 0">${esc(c.g)} / ${esc(c.s)}</h3>`
+  +(Object.keys(TNM).length?'':'<p class="m" style="color:#b3261e">لا يوجد معلمون مسجلون. أضفهم أولاً من تبويب «المعلمون».</p>')
+  +`<div class="c"><b>مرشد الصف</b><select id="cg">${opts(c.guide)}</select></div><div class="c"><b>معلم كل مادة</b>`
+  +SUBS.map((sb,i)=>`<div class="r"><span style="min-width:120px">${sb}</span><select class="cs" data-sb="${sb}" style="flex:1">${opts((c.subjects||{})[sb])}</select></div>`).join('')
+  +`</div><button onclick="saveCl()">💾 حفظ التعيينات</button>`;
+}
+window.saveCl=()=>ok(async()=>{
+ const c=CF,guide=$('#cg').value,subjects={},tn={};
+ document.querySelectorAll('.cs').forEach(x=>{if(x.value){subjects[x.dataset.sb]=x.value;tn[x.dataset.sb]=TNM[x.value]||''}});
+ const members=[...new Set([guide,...Object.values(subjects)].filter(Boolean))];
+ await updateDoc(doc(db,'classes',c.id),{guide,guideName:guide?(TNM[guide]||''):'',subjects,tn,members,u:Date.now()});
+ if(guide)await setDoc(doc(db,'teachers',guide),{guide:true},{merge:true});
+ CF=null;msg('تم الحفظ ✅');vCl();
 });
 
 /* ---- استيراد من الإيمس ---- */
@@ -122,16 +171,18 @@ window.saveE=()=>ok(async()=>{
 /* ---- المعلمون ---- */
 async function vTc(){
  const s=await getDocs(collection(db,'teachers'));TC={};
- s.docs.forEach(d=>{TC[d.id]=d.data().grades||[];TS[d.id]=d.data().subjects||[];TG[d.id]=!!d.data().guide});
- $('#v').innerHTML='<div class="c"><input id="te" type="email" dir="ltr" placeholder="إيميل المعلم">'+GR.map(g=>`<label class="k gk"><input type="checkbox" value="${g}">${g}</label>`).join('')+'<p class="m">المواد (اتركها فارغة = كل المواد):</p>'+SUBS.map(x=>`<label class="k sk"><input type="checkbox" value="${x}">${x}</label>`).join('')+'<label class="k"><input type="checkbox" id="tg"> مرشد صف (يظهر له سجل الدرجات)</label><button onclick="saveT()">حفظ</button></div>'
-  +Object.entries(TC).map(([e,g])=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(e)}<br><span class="m">${esc(g.join('، '))}${(TS[e]||[]).length?' — '+esc(TS[e].join('، ')):''}${TG[e]?' — مرشد صف':''}</span></b><button class="l" onclick="editT('${esc(e)}')">✏️</button><button class="l" onclick="delT('${esc(e)}')">🗑</button></div>`).join('');
+ s.docs.forEach(d=>{TC[d.id]=d.data().grades||[];TNM[d.id]=d.data().name||'';TS[d.id]=d.data().subjects||[];TG[d.id]=!!d.data().guide});
+ $('#v').innerHTML='<div class="c"><input id="te" type="email" dir="ltr" placeholder="إيميل المعلم"><input id="tnm" placeholder="اسم المعلم (يظهر بدل الإيميل)">'+GR.map(g=>`<label class="k gk"><input type="checkbox" value="${g}">${g}</label>`).join('')+'<p class="m">المواد (اتركها فارغة = كل المواد):</p>'+SUBS.map(x=>`<label class="k sk"><input type="checkbox" value="${x}">${x}</label>`).join('')+'<label class="k"><input type="checkbox" id="tg"> مرشد صف (يظهر له سجل الدرجات)</label><button onclick="saveT()">حفظ</button></div>'
+  +Object.entries(TC).map(([e,g])=>`<div class="r"><b style="text-align:right">${esc(TNM[e]||'بدون اسم')}<br><span class="m" dir="ltr">${esc(e)}</span><br><span class="m">${esc(g.join('، '))}${(TS[e]||[]).length?' — '+esc(TS[e].join('، ')):''}${TG[e]?' — مرشد صف':''}</span></b><button class="l" onclick="editT('${esc(e)}')">✏️</button><button class="l" onclick="delT('${esc(e)}')">🗑</button></div>`).join('');
 }
 window.saveT=()=>ok(async()=>{
  const e=clean($('#te').value),g=[...document.querySelectorAll('.gk input:checked')].map(x=>x.value),sb=[...document.querySelectorAll('.sk input:checked')].map(x=>x.value);
  if(!e||!g.length)return msg('اكتب الإيميل واختر صفاً واحداً على الأقل');
- await setDoc(doc(db,'teachers',e),{grades:g,subjects:sb,guide:$('#tg').checked});vTc();
+ const nm=$('#tnm').value.trim();
+ await setDoc(doc(db,'teachers',e),{grades:g,subjects:sb,guide:$('#tg').checked,name:nm});
+ await syncNames(e,nm);vTc();
 });
-window.editT=e=>{$('#te').value=e;document.querySelectorAll('.gk input').forEach(x=>x.checked=TC[e].includes(x.value));document.querySelectorAll('.sk input').forEach(x=>x.checked=(TS[e]||[]).includes(x.value));$('#tg').checked=!!TG[e]};
+window.editT=e=>{$('#te').value=e;$('#tnm').value=TNM[e]||'';document.querySelectorAll('.gk input').forEach(x=>x.checked=TC[e].includes(x.value));document.querySelectorAll('.sk input').forEach(x=>x.checked=(TS[e]||[]).includes(x.value));$('#tg').checked=!!TG[e]};
 window.delT=e=>{if(confirm('حذف المعلم؟'))ok(async()=>{await deleteDoc(doc(db,'teachers',e));vTc()})};
 
 /* ---- الطلاب ---- */
@@ -181,7 +232,7 @@ window.undo=(id,eid,from)=>ok(async()=>{
 /* ---- المعاونون (يشاهدون الدرجات فقط) ---- */
 async function vVw(){
  const s=await getDocs(collection(db,'viewers'));
- $('#v').innerHTML='<div class="c"><p class="m">المعاون يشوف سجلات الدرجات فقط بدون تعديل. لازم يسوي حساباً بإيميله من زر «إنشاء حساب جديد» بهذي الصفحة.</p><input id="ve" type="email" dir="ltr" placeholder="إيميل المعاون"><button onclick="saveV()">إضافة</button></div>'
+ $('#v').innerHTML='<div class="c"><p class="m">المعاون يشوف كل الشعب وسجلات كل الطلاب ويعدّل الدرجات. لازم يسوي حساباً بإيميله من زر «إنشاء حساب جديد» بهذي الصفحة.</p><input id="ve" type="email" dir="ltr" placeholder="إيميل المعاون"><button onclick="saveV()">إضافة</button></div>'
   +s.docs.map(d=>`<div class="r"><b dir="ltr" style="text-align:right">${esc(d.id)}</b><button class="l" onclick="delV('${esc(d.id)}')">🗑</button></div>`).join('');
 }
 window.saveV=()=>ok(async()=>{const e=clean($('#ve').value);if(!e)return msg('اكتب الإيميل');await setDoc(doc(db,'viewers',e),{at:Date.now()});vVw()});
