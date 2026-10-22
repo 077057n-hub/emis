@@ -58,15 +58,28 @@ td input{width:54px;padding:8px 2px;text-align:center;margin:0}
 #pr{display:none}
 @page{size:A4 portrait;margin:8mm}
 @media print{
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
  body{background:#fff!important;padding:0!important}#app,.t{display:none!important}#pr{display:block}
- .pp{height:281mm;display:flex;flex-direction:column;page-break-after:always;direction:rtl;color:#000;font-family:Tajawal,"Segoe UI",Tahoma,Arial,sans-serif}
- .pp:last-child{page-break-after:auto}
- .ph{display:flex;justify-content:space-between;font-size:14px;margin-bottom:3mm}
- .pp h2{text-align:center;margin:3mm 0;font-size:17px;color:#b03020}
- .pp table{border-collapse:collapse;width:100%;flex:1;min-width:0}
- .pp td,.pp th{border:.4mm solid #1f3b9d;text-align:center;font-size:12px;padding:0 2px;background:#fff!important;color:#000!important}
- .pp th{background:#dbe4ff!important}.pp td:first-child{text-align:right;padding-right:4px;background:#fbe9e5!important;font-weight:700}
- .pf{display:flex;justify-content:space-between;margin-top:5mm;font-size:15px}
+ .pp{height:277mm;display:flex;flex-direction:column;page-break-after:always;break-after:page;direction:rtl;color:#111;font-family:Tajawal,"Segoe UI",Tahoma,Arial,sans-serif;overflow:hidden}
+ .pp:last-child{page-break-after:auto;break-after:auto}
+ .tp{display:flex;gap:3mm;height:30mm;margin-bottom:3mm}
+ .bx{border:.8mm solid #1f3b9d;border-radius:3mm;padding:1.5mm 3mm;display:flex;flex-direction:column;justify-content:center;font-size:13px}
+ .bx.sc{flex:1}.bx.sc .nm{margin-top:1.5mm;border:.4mm solid #1f3b9d;border-radius:2mm;min-height:9mm;padding:1mm 2mm;font-weight:700}
+ .bx.tt{flex:1.1;text-align:center;background:#f4cddd;font-weight:700;font-size:15px;line-height:1.6;color:#7a1f3d}.bx.tt .yr{margin-top:1.5mm;font-size:14px}
+ .bx.inf{flex:1;line-height:1.9}
+ .pp table{border-collapse:collapse;width:100%;table-layout:fixed;min-width:0}
+ .pp td,.pp th{border:.35mm solid #1f3b9d;text-align:center;font-size:12.5px;padding:0;overflow:hidden;background:#fff!important;color:#111!important}
+ .pp tr.hd{height:30mm}
+ .pp th.sbh{background:#a9c4ea!important;font-size:17px;font-weight:700}
+ .pp th.vh{background:#f4cddd!important;font-size:11px;font-weight:700}
+ .pp th.vh.bl{background:#a9c4ea!important}
+ .vt{writing-mode:vertical-rl;transform:rotate(180deg);display:inline-block;line-height:1.2;white-space:nowrap}
+ .pp td.sb{text-align:right;padding-right:2mm;font-weight:700;background:#f4cddd!important;color:#7a1f3d!important;font-size:13px}
+ .pp td.bl{background:#cfdcf2!important}.pp td.pk{background:#fbe6ee!important}
+ .pp td.pk2{font-size:14px}
+ .bt{display:flex;gap:2mm;height:13mm;margin-top:4mm}
+ .bb{border:.6mm solid #1f3b9d;border-radius:2mm;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+ .bb.lb{flex:0 0 26mm;background:#f4cddd;color:#7a1f3d}.bb.vl{flex:0 0 24mm;background:#cfdcf2}.bb.vl.w{flex:1}
 }
 </style>
 <link rel="stylesheet" href="theme.css">
@@ -77,7 +90,7 @@ td input{width:54px;padding:8px 2px;text-align:center;margin:0}
 <script type="module">
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {getAuth,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {initializeFirestore,persistentLocalCache,getFirestore,collection,doc,getDocs,setDoc,updateDoc,query,where,onSnapshot} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {initializeFirestore,persistentLocalCache,getFirestore,collection,doc,getDocs,getDoc,setDoc,updateDoc,deleteDoc,query,where,onSnapshot} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const OWNER='077057n@gmail.com',GO=['الأول','الثاني','الثالث','الرابع','الخامس','السادس'];
 const app=getApps().length?getApp():initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
 const auth=getAuth(app);let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache()})}catch(e){db=getFirestore(app)}
@@ -87,10 +100,12 @@ const nrm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ
 const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const CO=['تشرين 1','تشرين 2','كانون 1','كانون 2','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];
 const SCH={'التربية الإسلامية':[['الامتحان',80],['نشاط',20]],'اللغة العربية':[['قواعد',30],['تعبير',20],['إملاء',10],['خط',10],['قراءة',10],['دفتر',10],['سلوك',10]],'اللغة الإنكليزية':[['Speaking',20],['Reading',10],['Listening',10],['الامتحان',60]]};
-let me='',own=false,CLS=[],ROS=[],cur=null,tab='st',ATT={},AD=today(),unA=null,SQ='',GRD={},unG=null,GM=0,GS=null,pend={},timers={};
+let me='',own=false,CLS=[],ROS=[],cur=null,tab='st',ATT={},AD=today(),unA=null,SQ='',GRD={},unG=null,GM=0,GS=null,pend={},timers={},V=false,EDS=[],unE=null;
 const toast=t=>{const e=document.createElement('div');e.className='t';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2400)};
 const curC=()=>CLS.find(c=>c.id===cur);
-const isG=()=>!!curC()&&(curC().guide===me||own);
+const isGd=()=>!!curC()&&curC().guide===me;
+const isG=()=>!!curC()&&(curC().guide===me||own||V);
+const direct=(c,sub)=>own||V||c.subjects[sub]===me||(c.guide===me&&!c.subjects[sub]);
 const rosterOf=c=>ROS.filter(r=>nrm(r.g)===nrm(c.g)&&nrm(r.s)===nrm(c.s)).sort((a,b)=>nrm(a.n).localeCompare(nrm(b.n),'ar'));
 const dig=s=>{const a='٠١٢٣٤٥٦٧٨٩';let o=String(s).replace(/٫|,/g,'.');for(let i=0;i<10;i++)o=o.split(a[i]).join(i);return o};
 const schOf=sub=>{const k=nrm(sub);if(/ان[كج]ليزي/.test(k))return SCH['اللغة الإنكليزية'];const e=Object.entries(SCH).find(([n])=>nrm(n)===k);return e&&e[1]};
@@ -100,7 +115,8 @@ onAuthStateChanged(auth,async u=>{
  if(!u){location.href='app.html';return}
  me=(u.email||'').toLowerCase();own=me===OWNER;
  try{
-  const q=own?collection(db,'classes'):query(collection(db,'classes'),where('members','array-contains',me));
+  if(!own){try{V=(await getDoc(doc(db,'viewers',me))).exists()}catch(e){}}
+  const q=(own||V)?collection(db,'classes'):query(collection(db,'classes'),where('members','array-contains',me));
   CLS=(await getDocs(q)).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>GO.indexOf(a.g)-GO.indexOf(b.g)||String(a.s).localeCompare(b.s,'ar'));
   ROS=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()})).filter(r=>!r.del);
  }catch(e){$('#app').innerHTML='<p class="empty"><div>⚠️</div>تعذر التحميل: '+esc(e.code||e.message)+'<br>تأكد من الإنترنت وأنك معيّن من المدير.</p>';return}
@@ -109,21 +125,23 @@ onAuthStateChanged(auth,async u=>{
 
 /* ---------- الشاشة الرئيسية: صفوفي ---------- */
 function home(){
- if(unA){unA();unA=null}if(unG){unG();unG=null}flush();cur=null;ATT={};GRD={};
+ if(unA){unA();unA=null}if(unG){unG();unG=null}if(unE){unE();unE=null}flush();cur=null;ATT={};GRD={};EDS=[];
  const cards=CLS.map(c=>{
   const n=rosterOf(c).length,mine=Object.entries(c.subjects||{}).filter(([,e])=>e===me).map(([s])=>s);
-  const bd=(c.guide===me?'<span class="pill ok">مرشد الصف</span>':'')+mine.map(s=>`<span class="pill">${esc(s)}</span>`).join('');
+  const bd=(c.guide===me?'<span class="pill ok">مرشد الصف</span>':'')+(V&&!own?'<span class="pill">معاون</span>':'')+mine.map(s=>`<span class="pill">${esc(s)}</span>`).join('');
   return `<div class="card k" onclick="openC('${c.id}')"><span class="n">${esc(c.s)}</span><b>${esc(c.g)} / ${esc(c.s)}<br><span class="mu">${n} طالب</span><div>${bd}</div></b><span class="ar">‹</span></div>`;
  }).join('');
- $('#app').innerHTML=`<header><div class="top"><h1>🏫 صفوفي</h1><button class="ic" onclick="location.href='app.html'">🏠</button></div><p class="mu">${esc(me)}${own?' — المالك':''}</p></header><main>`
+ $('#app').innerHTML=`<header><div class="top"><h1>🏫 صفوفي</h1><button class="ic" onclick="location.href='app.html'">🏠</button></div><p class="mu">${esc(me)}${own?' — المالك':V?' — معاون المدير':''}</p></header><main>`
   +(cards||`<div class="empty"><div>📭</div>لم تُعيَّن لك أي شعبة بعد.<br>${own?'عيّن الشعب من صفحة الإدارة ← تعيين الشعب.':'تواصل مع المدير ليعيّنك.'}</div>`)
-  +`<div class="lnk"><a href="teacher-app.html">دفتر المعلم</a><a href="grades-record.html">سجل الدرجات</a>${own?'<a href="admin.html">⚙️ الإدارة</a>':''}<a href="#" onclick="out();return false">خروج</a></div></main>`;
+  +`<div class="lnk">${own?'<a href="admin.html">⚙️ الإدارة</a>':''}<a href="#" onclick="out();return false">خروج</a></div></main>`;
 }
 window.out=()=>signOut(auth);
 window.openC=id=>{
  cur=id;tab='st';AD=today();SQ='';ATT={};GRD={};GS=null;GM=0;
  unA=onSnapshot(collection(db,'classes',id,'attendance'),s=>{ATT={};s.forEach(d=>ATT[d.id]=d.data());if(cur===id&&(tab==='at'||tab==='st'))view(true)},()=>{});
  if(unG)unG();
+ if(unE)unE();EDS=[];
+ unE=onSnapshot(collection(db,'classes',id,'edits'),s=>{EDS=s.docs.map(d=>({id:d.id,...d.data()}));const a=document.activeElement;if(cur===id&&(tab==='gr'||tab==='rc')&&!(a&&a.tagName==='INPUT'))view(true)},()=>{});
  unG=onSnapshot(collection(db,'classes',id,'grades'),s=>{
   GRD={};s.forEach(d=>{const o=d.data();GRD[o.sid+'|'+o.sub]={v:o.v||{},p:o.p||{}}});
   const a=document.activeElement;
@@ -140,7 +158,7 @@ function view(keep){
  const c=curC();if(!c)return home();
  const y=scrollY,fo=document.activeElement&&document.activeElement.id;
  const body=tab==='st'?vSt(c):tab==='at'?vAt(c):tab==='gr'?vGr(c):tab==='rc'?vRc(c):`<div class="empty"><div>🛠️</div>هذا القسم يُضاف بالمرحلة القادمة.</div>`;
- $('#app').innerHTML=`<header><div class="top"><h1>${esc(c.g)} / ${esc(c.s)}</h1><button class="ic" onclick="home()">⬅️</button></div></header><main>${body}</main><nav><div class="ng">${tb(TB[0])}${tb(TB[1])}</div><button class="hmb" onclick="home()"><span>🏠</span>صفوفي</button><div class="ng">${tb(TB[2])}${tb(TB[3])}</div></nav>`;
+ $('#app').innerHTML=`<header><div class="top"><h1>${esc(c.g)} / ${esc(c.s)}</h1><button class="ic" onclick="home()">⬅️</button></div></header><main>${body}</main><nav><div class="ng">${tb(TB[0])}${tb(TB[1])}</div><button class="hmb" onclick="home()"><span>🏠</span>صفوفي</button><div class="ng">${tb(TB[2])}${isG()?tb(TB[3]):''}</div></nav>`;
  window.home=home;
  if(keep){scrollTo(0,y);if(fo==='sq'){const e=$('#sq');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length)}}}
  if(tab==='st'||tab==='gr')flt();
@@ -193,15 +211,15 @@ function vGr(c){
  if(!subs.includes(GS))GS=subs.find(s=>c.subjects[s]===me)||subs[0];
  const early=EARLY(c),mx=early?10:100,pass=early?5:50,months=early?CO.slice(0,10):CO;
  if(GM>=months.length)GM=0;
- const can=isG()||c.subjects[GS]===me,sc=early?null:schOf(GS),L=rosterOf(c);
+ const can=direct(c,GS),prop=!can&&isGd(),sc=early?null:schOf(GS),L=rosterOf(c);
  const o=eid=>GRD[eid+'|'+GS]||{v:{},p:{}};
  const tv=eid=>{const x=(o(eid).v||{})[GM];return x===undefined||x===null?'':x};
  const vals=L.map(s=>tv(s.eid)).filter(x=>x!=='').map(Number);
  const avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):'–';
  const ms=isG()?`<div class="card"><b>📉 نواقص ${months[GM]}<div class="st mu">${subs.map(x=>{const m=L.filter(t=>{const v=((GRD[t.eid+'|'+x]||{}).v||{})[GM];return v===undefined||v===null||v===''}).length;return esc(x)+': '+(m?'ناقص '+m+' طالب':'✅ مكتمل')}).join('<br>')}</div></b></div>`:'';
- const head=`<select onchange="gs(this.value)">${subs.map(s=>`<option value="${esc(s)}"${s===GS?' selected':''}>${esc(s)}${c.subjects[s]===me?' ✏️':''}</option>`).join('')}</select>`
+ const head=vReq(c)+`<select onchange="gs(this.value)">${subs.map(s=>`<option value="${esc(s)}"${s===GS?' selected':''}>${esc(s)}${c.subjects[s]===me?' ✏️':''}</option>`).join('')}</select>`
   +`<div class="days">${months.map((x,i)=>`<button class="${i===GM?'on':''}" onclick="gm(${i})">${x}</button>`).join('')}</div>`
-  +(can?`<p class="mu">يمكنك تعديل هذه المادة — الدرجة من ${mx}${sc?' (تقسيم المادة، والمجموع هو الي يصل للمرشد)':''}.</p>`:`<div class="warn">مادة ${esc(GS)} للمشاهدة فقط${c.subjects[GS]?' — معلمها: '+esc(c.subjects[GS]):''}.</div>`)
+  +(can?`<p class="mu">يمكنك تعديل هذه المادة — الدرجة من ${mx}${sc?' (تقسيم المادة، والمجموع هو الي يصل للمرشد)':''}.</p>`:prop?`<div class="warn">مادة ${esc(GS)} لمعلمها: ${esc(c.subjects[GS])}. تعديلك يُرسل له كطلب ويُطبَّق بعد موافقته (اضغط ✏️ بجانب الطالب).</div>`:`<div class="warn">مادة ${esc(GS)} للمشاهدة فقط${c.subjects[GS]?' — معلمها: '+esc(c.subjects[GS]):''}.</div>`)
   +`<input id="sq" placeholder="🔍 ابحث باسم الطالب" value="${esc(SQ)}" oninput="sq(this.value)">`
   +`<div class="chips"><span>✍️ ${vals.length}/${L.length}</span><span>📊 ${avg}</span><span>❌ ${vals.filter(x=>x<pass).length}</span></div>`+ms;
  if(!L.length)return head+'<div class="empty"><div>👥</div>لا يوجد طلاب</div>';
@@ -210,7 +228,7 @@ function vGr(c){
    +L.map((s,i)=>{const p=(o(s.eid).p||{})[GM]||{};return `<tr data-n="${esc(nrm(s.n))}"><td>${i+1}. ${esc(s.n)}</td>`+sc.map(([n,m],j)=>`<td><input class="gi" type="number" inputmode="decimal" min="0" max="${m}" value="${p[j]??''}" oninput="gp('${s.eid}',${j},this)"></td>`).join('')+`<td data-tot="${s.eid}" class="val">${tv(s.eid)}</td></tr>`}).join('')+'</table></div>';
  }
  return head+L.map((s,i)=>`<div class="card" data-n="${esc(nrm(s.n))}"><span class="n">${i+1}</span><b>${esc(s.n)}</b>`
-  +(can?`<input class="gi" type="number" inputmode="decimal" min="0" max="${mx}" value="${tv(s.eid)}" oninput="gi('${s.eid}',this)">`:`<span class="val">${tv(s.eid)===''?'–':tv(s.eid)}</span>`)+'</div>').join('');
+  +(can?`<input class="gi" type="number" inputmode="decimal" min="0" max="${mx}" value="${tv(s.eid)}" oninput="gi('${s.eid}',this)">`:`<span class="val">${tv(s.eid)===''?'–':tv(s.eid)}</span>`+(prop?`<button class="ic" onclick="rq('${s.eid}')">✏️</button>`:''))+'</div>').join('');
 }
 window.gs=v=>{flush();GS=v;view()};
 window.gm=i=>{flush();GM=i;view()};
@@ -248,6 +266,38 @@ window.gp=(eid,j,el)=>{
  qw(eid,GS,GM,tot,{[j]:pm[j]});
 };
 
+/* ---------- طلبات تعديل الدرجات (المرشد ← معلم المادة) ---------- */
+const stName=eid=>{const r=ROS.find(x=>x.eid===eid);return r?r.n:'—'};
+const ST={p:['بانتظار الموافقة','wn'],a:['تمت الموافقة ✅','ok'],r:['مرفوض ❌','neg']};
+function vReq(c){
+ const mine=Object.entries(c.subjects||{}).filter(([,e])=>e===me).map(([s])=>s);
+ const inc=EDS.filter(r=>r.st==='p'&&mine.includes(r.sub)).sort((a,b)=>a.u-b.u);
+ const out=EDS.filter(r=>r.by===me).sort((a,b)=>b.u-a.u).slice(0,6);
+ let h='';
+ if(inc.length)h+=`<div class="warn"><b>📩 طلبات تعديل بانتظار موافقتك (${inc.length})</b></div>`+inc.map(r=>`<div class="card"><b>${esc(stName(r.sid))}<br><span class="mu">${esc(r.sub)} — ${MN[r.m]}: ${r.ov??'–'} ← <b>${r.nv??'حذف'}</b><br>من المرشد: ${esc(r.by)}</span></b><button class="ic" onclick="ap('${r.id}',1)">✅</button><button class="ic" onclick="ap('${r.id}',0)">❌</button></div>`).join('');
+ if(out.length)h+=`<div class="card"><b>طلباتي للتعديل<div class="st mu">${out.map(r=>esc(stName(r.sid))+' — '+esc(r.sub)+' — '+MN[r.m]+': '+(r.ov??'–')+' ← '+(r.nv??'حذف')+' <span class="pill '+ST[r.st][1]+'">'+ST[r.st][0]+'</span>'+(r.st==='p'?' <a href="#" onclick="cx(\''+r.id+'\');return false">إلغاء</a>':'')).join('<br>')}</div></b></div>`;
+ return h;
+}
+window.rq=async eid=>{
+ const c=curC(),mx=EARLY(c)?10:100,old=((loc(eid,GS).v||{})[GM]);
+ const a=prompt('الدرجة الجديدة لـ '+stName(eid)+' ('+GS+' — '+MN[GM]+') من '+mx+'\nاتركها فارغة للحذف');
+ if(a===null)return;
+ const x=dig(a.trim());let t=null;
+ if(x!==''){t=+x;if(isNaN(t)||t<0||t>mx)return toast('الحد الأقصى '+mx)}
+ if(t===(old===undefined?null:old))return toast('نفس الدرجة الحالية');
+ try{await setDoc(doc(collection(db,'classes',c.id,'edits')),{sid:eid,sub:GS,m:GM,ov:old===undefined?null:old,nv:t,by:me,st:'p',u:Date.now()});toast('أُرسل الطلب لمعلم المادة 📩')}
+ catch(e){toast('تعذر إرسال الطلب')}
+};
+window.ap=async(id,ok)=>{
+ const r=EDS.find(x=>x.id===id),c=curC();if(!r)return;
+ try{
+  if(ok)await setDoc(doc(db,'classes',c.id,'grades',r.sid+'__'+r.sub.replace(/\//g,'-')),{sid:r.sid,sub:r.sub,u:Date.now(),v:{[r.m]:r.nv}},{merge:true});
+  await updateDoc(doc(db,'classes',c.id,'edits',id),{st:ok?'a':'r',at:Date.now()});
+  toast(ok?'تم تطبيق التعديل ✅':'تم رفض الطلب');
+ }catch(e){toast('تعذر التنفيذ')}
+};
+window.cx=async id=>{try{await deleteDoc(doc(db,'classes',curC().id,'edits',id))}catch(e){toast('تعذر الإلغاء')}};
+
 /* ---------- السجل (للمرشد): سجل الطالب والنتائج والطباعة ---------- */
 const MN=['تشرين الأول','تشرين الثاني','كانون الأول','كانون الثاني','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];
 let RS=null;
@@ -267,10 +317,10 @@ function recOf(c,eid){
 }
 const pc=t=>t==='ناجح'?'ok':t==='إكمال'?'wn':t==='راسب'?'neg':'';
 const NMS=()=>{try{return JSON.parse(localStorage.getItem('sch_names')||'{}')}catch(e){return{}}};
-window.nsv=()=>{try{localStorage.setItem('sch_names',JSON.stringify({g:$('#ng').value.trim(),p:$('#np').value.trim()}))}catch(e){}};
+window.nsv=()=>{try{localStorage.setItem('sch_names',JSON.stringify({g:$('#ng').value.trim(),p:$('#np').value.trim(),s:$('#ns').value.trim()}))}catch(e){}};
 window.rs=v=>{RS=v;view()};
 function vRc(c){
- if(!isG())return '<div class="empty"><div>🔒</div>سجل الطالب للمرشد فقط.</div>';
+ if(!isG())return '<div class="empty"><div>🔒</div>سجل الطالب لمرشد هذه الشعبة فقط.</div>';
  const L=rosterOf(c);
  if(!L.length||!Object.keys(c.subjects||{}).length)return '<div class="empty"><div>📋</div>لا يوجد طلاب أو مواد بهذه الشعبة بعد.</div>';
  if(!L.find(s=>s.eid===RS))RS=L[0].eid;
@@ -281,7 +331,7 @@ function vRc(c){
   +`<div class="tw"><table><tr><th>المادة</th>${MN.slice(0,cols).map(x=>`<th>${x}</th>`).join('')}${early?'<th>المعدل</th>':'<th>ن1</th><th>ن2</th><th>سنوي</th><th>النهائية</th>'}</tr>`
   +r.rows.map(x=>`<tr><td>${esc(x.sb)}</td>${x.g.slice(0,cols).map(v=>`<td>${v??''}</td>`).join('')}${early?'':`<td>${x.ex.a1??''}</td><td>${x.ex.a2??''}</td><td>${x.ex.an??''}</td>`}<td${x.eff!==null&&x.eff<pass?' style="color:#d23f37"':''}><b>${x.eff??''}</b></td></tr>`).join('')+'</table></div>'
   +`<p class="mu" style="margin-top:6px">${early?'معدل المادة = معدل كل الخانات المدخلة من 10، والراسب بالمادة أقل من 5.':'السنوي والنهائية بنفس حساب سجل الخامس والسادس، والراسب بالمادة أقل من 50.'} ناجح: لا مواد راسبة · إكمال: 1 إلى 3 · راسب: أكثر من 3.</p>`
-  +`<input id="ng" placeholder="اسم مرشد الصف (يُطبع)" value="${esc(N.g||'')}" oninput="nsv()"><input id="np" placeholder="اسم المدير (يُطبع)" value="${esc(N.p||'')}" oninput="nsv()">`
+  +`<input id="ns" placeholder="اسم المدرسة (يُطبع)" value="${esc(N.s||'')}" oninput="nsv()"><input id="ng" placeholder="اسم مرشد الصف (يُطبع)" value="${esc(N.g||'')}" oninput="nsv()"><input id="np" placeholder="اسم المدير (يُطبع)" value="${esc(N.p||'')}" oninput="nsv()">`
   +'<button class="b" onclick="pr(0)">🖨️ طباعة سجل هذا الطالب</button><button class="b g" onclick="pr(1)">🖨️ طباعة سجلات كل الشعبة</button>'
   +`<hr style="margin:12px 0;border:0;border-top:1px solid var(--bd)"><div class="chips"><span>✅ ${cn('ناجح')}</span><span>🔄 ${cn('إكمال')}</span><span>❌ ${cn('راسب')}</span></div>`
   +all.map((x,i)=>`<div class="card k" onclick="rs('${x.s.eid}')"><span class="n">${i+1}</span><b>${esc(x.s.n)}</b><span class="pill ${pc(x.r.res)}">${x.r.res}</span></div>`).join('');
@@ -289,11 +339,21 @@ function vRc(c){
 window.pr=all=>{
  const c=curC(),L=rosterOf(c),list=all?L:L.filter(s=>s.eid===RS),early=EARLY(c),cols=early?10:11,N=NMS();
  const d=new Date(),y=d.getFullYear(),yr='\u202D'+(d.getMonth()>=8?y+' / '+(y+1):(y-1)+' / '+y)+'\u202C';
+ const VH=['تشرين الأول','تشرين الثاني','كانون الأول','كانون الثاني','امتحان نصف السنة','شباط','آذار','نيسان','أيار','الامتحان النهائي','الدور الثاني'].slice(0,cols);
+ const X=early?[]:['معدل النصف الأول','معدل النصف الثاني','المعدل السنوي','الدرجة النهائية'];
+ const heads=[...VH,...X],tail=early?['','الملاحظات']:[];
+ const nSub=Object.keys(c.subjects||{}).length,R=Math.max(early?13:12,nSub),rh=Math.min(13.5,168/R).toFixed(2);
  $('#pr').innerHTML=list.map(s=>{
-  const r=recOf(c,s.eid);
-  return `<div class="pp"><div class="ph"><div><b>الاسم:</b> ${esc(s.n)}</div><div><b>الصف:</b> ${esc(c.g)} &nbsp; <b>الشعبة:</b> ${esc(c.s)} &nbsp; <b>التسلسل:</b> ${L.indexOf(s)+1}</div></div><h2>${early?'سجل الدرجات للصفوف الأولية':'المعدل الشهري والسنوي'} لسنة ${yr}</h2><table dir="rtl"><tr><th>الدروس</th>${MN.slice(0,cols).map(x=>`<th>${x}</th>`).join('')}${early?'<th></th><th>الملاحظات</th>':'<th>معدل ن1</th><th>معدل ن2</th><th>السنوي</th><th>النهائية</th>'}</tr>`
-   +r.rows.map(x=>`<tr><td>${esc(x.sb)}</td>${x.g.slice(0,cols).map(v=>`<td>${v??''}</td>`).join('')}${early?'<td></td><td></td>':`<td>${x.ex.a1??''}</td><td>${x.ex.a2??''}</td><td>${x.ex.an??''}</td><td>${x.eff??''}</td>`}</tr>`).join('')
-   +`</table><div class="pf"><span>النتيجة: <b>${r.res==='—'?'':r.res}</b></span><span>مرشد الصف: ${esc(N.g||'')}</span><span>المدير: ${esc(N.p||'')}</span></div></div>`;
+  const r=recOf(c,s.eid),rows=r.rows.map(x=>({n:x.sb,v:[...x.g.slice(0,cols),...(early?[]:[x.ex.a1,x.ex.a2,x.ex.an,x.eff])]}));
+  while(rows.length<R)rows.push({n:'',v:[]});
+  const sum=heads.map((_,i)=>{const a=rows.map(x=>nn(x.v[i])).filter(z=>z!==null);return a.length?a.reduce((p,q)=>p+q,0):''});
+  const hc=heads.map((h,i)=>`<th class="vh${i===4?' bl':''}"><div class="vt">${h}</div></th>`).join('')+tail.map(h=>`<th class="vh"><div class="vt">${h}</div></th>`).join('');
+  const body=rows.map(x=>`<tr style="height:${rh}mm"><td class="sb">${esc(x.n)}</td>${heads.map((_,i)=>`<td class="${i===4?'bl':i===cols-1?'pk':''}">${x.v[i]??''}</td>`).join('')}${tail.map(()=>'<td></td>').join('')}</tr>`).join('');
+  const tr=(l,v)=>`<tr style="height:10mm"><td class="sb pk2">${l}</td>${heads.map((_,i)=>`<td>${v?sum[i]:''}</td>`).join('')}${tail.map(()=>'<td></td>').join('')}</tr>`;
+  const title=early?'سجل الدرجات<br>للصفوف الأولية':'المعدل الشهري والسنوي<br>للمدارس الابتدائية';
+  return `<div class="pp"><div class="tp"><div class="bx sc"><b>إدارة مدرسة</b><div class="nm">${esc(N.s||'')}</div></div><div class="bx tt"><div>${title}</div><div class="yr">لسنة ${yr}</div></div><div class="bx inf"><div><b>الاسم:</b> ${esc(s.n)}</div><div><b>الصف:</b> ${esc(c.g)} &nbsp; <b>الشعبة:</b> ${esc(c.s)}</div><div><b>التسلسل:</b> ${L.indexOf(s)+1}</div></div></div>`
+   +`<table dir="rtl"><colgroup><col style="width:${early?15:14}%">${heads.map(()=>'<col>').join('')}${early?'<col style="width:5%"><col style="width:13%">':''}</colgroup><tr class="hd"><th class="sbh">الدروس</th>${hc}</tr>${body}${tr('المجموع',1)}${tr('النتيجة',0)}</table>`
+   +`<div class="bt"><div class="bb lb">النتيجة</div><div class="bb vl">${r.res==='—'?'':r.res}</div><div class="bb lb">مرشد الصف</div><div class="bb vl w">${esc(N.g||'')}</div><div class="bb lb">المدير</div><div class="bb vl w">${esc(N.p||'')}</div></div></div>`;
  }).join('');
  window.onafterprint=()=>{$('#pr').innerHTML=''};
  setTimeout(()=>window.print(),150);

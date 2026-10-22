@@ -1,4 +1,4 @@
-const C='grades-v9';
+const C='grades-v10';
 const F=['./grades-record.html','./link.js','./manifest.json','./icon-192.png','./icon-512.png',
  './app.html','./school.html','./app-manifest.json','./app-icon-192.png','./app-icon-512.png',
  './teacher-app.html','./teacher-link.js','./teacher-roster.js','./teacher-cloud.js', './teacher-extras.js', './theme.css','./teacher-manifest.json','./teacher-icon-192.png','./teacher-icon-512.png'];
