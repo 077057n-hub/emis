@@ -48,6 +48,17 @@ select{width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:12p
 .days .on{background:var(--pr);color:#fff;font-weight:700}
 .gi{width:76px;margin:0;text-align:center;font-weight:700}
 .tw{overflow-x:auto;background:var(--card);border-radius:14px;margin-top:8px}
+.acc{background:var(--card);border:1px solid var(--bd);border-radius:16px;margin:8px 0;overflow:hidden}
+.acc>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;font-size:15px}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary b{flex:1}
+.acc>summary::after{content:'▾';font-size:20px;color:var(--pr);transition:transform .2s}
+.acc[open]>summary::after{transform:rotate(180deg)}
+.acc .ab{padding:0 12px 14px}
+.rt{min-width:720px}
+.rt th,.rt td{border:1px solid color-mix(in srgb,var(--tx) 24%,transparent);padding:9px 6px;font-size:14px;min-width:52px;white-space:nowrap}
+.rt th{font-size:12.5px;font-weight:700}
+.rt .sbj{min-width:130px;text-align:right;padding-right:10px;font-weight:700;background:var(--pl)}
 table{border-collapse:collapse;width:100%;min-width:560px}
 th,td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--bd);font-size:13px}
 th{background:var(--pl);color:var(--pr);font-size:12px}
@@ -406,22 +417,25 @@ const pc=t=>t==='ناجح'?'ok':t==='إكمال'?'wn':t==='راسب'?'neg':'';
 const NMS=()=>{try{return JSON.parse(localStorage.getItem('sch_names')||'{}')}catch(e){return{}}};
 window.nsv=()=>{try{localStorage.setItem('sch_names',JSON.stringify({g:$('#ng').value.trim(),p:$('#np').value.trim(),s:$('#ns').value.trim()}))}catch(e){}};
 window.rs=v=>{RS=v;view()};
+const OPEN=new Set();
+window.tg=(k,o)=>{o?OPEN.add(k):OPEN.delete(k)};
+window.prs=e=>{RS=e;pr(0)};
+const ordRows=(c,rows)=>slots(EARLY(c)?JR:SR,rows).filter(x=>x.r).map(x=>x.r);
 function vRc(c){
  if(!isG())return '<div class="empty"><div>🔒</div>سجل الطالب لمرشد هذه الشعبة فقط.</div>';
  const L=rosterOf(c);
  if(!L.length||!Object.keys(c.subjects||{}).length)return '<div class="empty"><div>📋</div>لا يوجد طلاب أو مواد بهذه الشعبة بعد.</div>';
  if(!L.find(s=>s.eid===RS))RS=L[0].eid;
- const early=EARLY(c),pass=early?5:50,cols=early?10:11,r=recOf(c,RS),N=NMS();
+ const early=EARLY(c),pass=early?5:50,cols=early?10:11,N=NMS();
  const all=L.map(s=>({s,r:recOf(c,s.eid)})),cn=t=>all.filter(x=>x.r.res===t).length;
- return `<select onchange="rs(this.value)">${L.map((s,i)=>`<option value="${s.eid}"${s.eid===RS?' selected':''}>${i+1} - ${esc(s.n)}</option>`).join('')}</select>`
-  +`<div class="chips"><span>${esc(c.g)} / ${esc(c.s)}</span><span><b class="pill ${pc(r.res)}">${r.res}</b></span><span>راسب بـ ${r.n}</span></div>`
-  +`<div class="tw"><table><tr><th>المادة</th>${MN.slice(0,cols).map(x=>`<th>${x}</th>`).join('')}${early?'<th>المعدل</th>':'<th>ن1</th><th>ن2</th><th>سنوي</th><th>النهائية</th>'}</tr>`
-  +r.rows.map(x=>`<tr><td>${esc(x.sb)}</td>${x.g.slice(0,cols).map(v=>`<td>${v??''}</td>`).join('')}${early?'':`<td>${x.ex.a1??''}</td><td>${x.ex.a2??''}</td><td>${x.ex.an??''}</td>`}<td${x.eff!==null&&x.eff<pass?' style="color:#d23f37"':''}><b>${x.eff??''}</b></td></tr>`).join('')+'</table></div>'
-  +`<p class="mu" style="margin-top:6px">${early?'معدل المادة = معدل كل الخانات المدخلة من 10، والراسب بالمادة أقل من 5.':'السنوي والنهائية بنفس حساب سجل الخامس والسادس، والراسب بالمادة أقل من 50.'} ناجح: لا مواد راسبة · إكمال: 1 إلى 3 · راسب: أكثر من 3.</p>`
-  +`<input id="ns" placeholder="اسم المدرسة (يُطبع)" value="${esc(N.s||'')}" oninput="nsv()"><input id="ng" placeholder="اسم مرشد الصف (يُطبع)" value="${esc(N.g||c.guideName||'')}" oninput="nsv()"><input id="np" placeholder="اسم المدير (يُطبع)" value="${esc(N.p||'')}" oninput="nsv()">`
-  +'<button class="b" onclick="pr(0)">🖨️ طباعة سجل هذا الطالب</button><button class="b g" onclick="pr(1)">🖨️ طباعة سجلات كل الشعبة</button>'
-  +`<hr style="margin:12px 0;border:0;border-top:1px solid var(--bd)"><div class="chips"><span>✅ ${cn('ناجح')}</span><span>🔄 ${cn('إكمال')}</span><span>❌ ${cn('راسب')}</span></div>`
-  +all.map((x,i)=>`<div class="card k" onclick="rs('${x.s.eid}')"><span class="n">${i+1}</span><b>${esc(x.s.n)}</b><span class="pill ${pc(x.r.res)}">${x.r.res}</span></div>`).join('');
+ const head=`<tr><th class="sbj">المادة</th>${MN.slice(0,cols).map(x=>`<th>${x}</th>`).join('')}${early?'<th>المعدل</th>':'<th>ن1</th><th>ن2</th><th>سنوي</th><th>النهائية</th>'}</tr>`;
+ const cell=v=>v===null||v===undefined||v===''?'<span class="mu">–</span>':v;
+ const tbl=r=>`<div class="tw"><table class="rt">${head}`+ordRows(c,r.rows).map(x=>`<tr><td class="sbj">${esc(x.sb)}</td>${x.g.slice(0,cols).map(v=>`<td>${cell(v)}</td>`).join('')}${early?'':`<td>${cell(x.ex.a1)}</td><td>${cell(x.ex.a2)}</td><td>${cell(x.ex.an)}</td>`}<td${x.eff!==null&&x.eff<pass?' style="color:#d23f37"':''}><b>${cell(x.eff)}</b></td></tr>`).join('')+'</table></div>';
+ return `<div class="chips"><span>${esc(c.g)} / ${esc(c.s)}</span><span>✅ ${cn('ناجح')}</span><span>🔄 ${cn('إكمال')}</span><span>❌ ${cn('راسب')}</span></div>`
+  +`<details class="acc" ${OPEN.has('prt')?'open':''} ontoggle="tg('prt',this.open)"><summary>🖨️ الطباعة وأسماء السجل</summary><div class="ab"><input id="ns" placeholder="اسم المدرسة (يُطبع)" value="${esc(N.s||'')}" oninput="nsv()"><input id="ng" placeholder="اسم مرشد الصف (يُطبع)" value="${esc(N.g||c.guideName||'')}" oninput="nsv()"><input id="np" placeholder="اسم المدير (يُطبع)" value="${esc(N.p||'')}" oninput="nsv()"><button class="b g" onclick="pr(1)">🖨️ طباعة سجلات كل الشعبة</button></div></details>`
+  +`<p class="mu" style="margin:6px 2px">اضغط على اسم الطالب لعرض نتيجته ودرجاته.</p>`
+  +all.map((x,i)=>`<details class="acc" ${OPEN.has(x.s.eid)?'open':''} ontoggle="tg('${x.s.eid}',this.open)"><summary><span class="n">${i+1}</span><b>${esc(x.s.n)}</b><span class="pill ${pc(x.r.res)}">${x.r.res}</span></summary><div class="ab"><p class="mu" style="margin:0 0 6px">${x.r.n?'راسب بـ '+x.r.n+' مواد':'لا مواد راسبة'}</p>${tbl(x.r)}<button class="b" onclick="prs('${x.s.eid}')">🖨️ طباعة سجل هذا الطالب</button></div></details>`).join('')
+  +`<p class="mu" style="margin-top:8px">${early?'معدل المادة = معدل الخانات المدخلة من 10، والراسب بالمادة أقل من 5.':'السنوي والنهائية بنفس حساب سجل الخامس والسادس، والراسب بالمادة أقل من 50.'} ناجح: لا مواد راسبة · إكمال: 1 إلى 3 · راسب: أكثر من 3.</p>`;
 }
 const JR=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','الحاسوب',null,null,null,'اللغة الفرنسية','التربية الفنية','التربية الرياضية'];
 const SR=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الاجتماعيات','العلوم','التربية الفنية والنشيد','التربية الرياضية',null,null,null,null];
