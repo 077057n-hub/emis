@@ -122,10 +122,10 @@ td input{width:54px;padding:8px 2px;text-align:center;margin:0}
 <script type="module">
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {getAuth,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {initializeFirestore,persistentLocalCache,getFirestore,collection,doc,getDocs,getDoc,setDoc,updateDoc,deleteDoc,writeBatch,addDoc,query,where,onSnapshot} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,getFirestore,getDocsFromCache,getDocFromCache,collection,doc,getDocs,getDoc,setDoc,updateDoc,deleteDoc,writeBatch,addDoc,query,where,onSnapshot} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const OWNER='077057n@gmail.com',GO=['الأول','الثاني','الثالث','الرابع','الخامس','السادس'];
 const app=getApps().length?getApp():initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
-const auth=getAuth(app);let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache()})}catch(e){db=getFirestore(app)}
+const auth=getAuth(app);let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){db=getFirestore(app)}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nrm=s=>String(s||'').replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim();
@@ -146,15 +146,41 @@ const nameOf=(c,em)=>{if(!em)return '—';if(em===OWNER)return 'المالك';if
 const myN=()=>{if(own)return 'المالك';for(const c of CLS){const n=nameOf(c,me);if(n!=='—')return n}return ''};
 function modal(html){const m=document.createElement('div');m.style.cssText='position:fixed;inset:0;background:#0008;z-index:30;display:flex;align-items:flex-end';m.innerHTML='<div style="background:var(--solid,#fff);color:var(--tx);width:100%;max-height:88%;overflow:auto;border-radius:20px 20px 0 0;padding:16px 16px calc(22px + env(safe-area-inset-bottom,0px))">'+html+'</div>';m.onclick=e=>{if(e.target===m)m.remove()};document.body.appendChild(m);return m}
 
+const wr=p=>Promise.race([p,new Promise(r=>setTimeout(r,2500))]);
+const wSet=(...a)=>wr(setDoc(...a)),wUpd=(...a)=>wr(updateDoc(...a)),wDel=(...a)=>wr(deleteDoc(...a));
+(function(){
+ const ob=document.createElement('div');
+ ob.textContent='📴 بدون إنترنت — يعمل من المخزّن وتُرسل تعديلاتك تلقائياً عند رجوع الاتصال';
+ ob.style.cssText='position:fixed;top:0;left:0;right:0;z-index:40;background:#b26a00;color:#fff;text-align:center;font-size:12px;padding:4px 8px;display:none';
+ document.body.appendChild(ob);
+ const ol=()=>{ob.style.display=navigator.onLine?'none':'block'};
+ addEventListener('online',ol);addEventListener('offline',ol);ol();
+})();
+async function loadAll(srv){
+ const q=(own||V)?collection(db,'classes'):query(collection(db,'classes'),where('members','array-contains',me));
+ const g=x=>srv?getDocs(x):getDocsFromCache(x);
+ const [c,r]=await Promise.all([g(q),g(collection(db,'roster'))]);
+ if(!srv&&c.empty&&r.empty)throw new Error('empty-cache');
+ CLS=c.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>GO.indexOf(a.g)-GO.indexOf(b.g)||String(a.s).localeCompare(b.s,'ar'));
+ ROS=r.docs.map(d=>({eid:d.id,...d.data()})).filter(x=>!x.del);
+}
 onAuthStateChanged(auth,async u=>{
  if(!u){location.href='app.html';return}
  me=(u.email||'').toLowerCase();own=me===OWNER;
- try{
-  if(!own){try{V=(await getDoc(doc(db,'viewers',me))).exists()}catch(e){}}
-  const q=(own||V)?collection(db,'classes'):query(collection(db,'classes'),where('members','array-contains',me));
-  CLS=(await getDocs(q)).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>GO.indexOf(a.g)-GO.indexOf(b.g)||String(a.s).localeCompare(b.s,'ar'));
-  ROS=(await getDocs(collection(db,'roster'))).docs.map(d=>({eid:d.id,...d.data()})).filter(r=>!r.del);
- }catch(e){$('#app').innerHTML='<p class="empty"><div>⚠️</div>تعذر التحميل: '+esc(e.code||e.message)+'<br>تأكد من الإنترنت وأنك معيّن من المدير.</p>';return}
+ const vk='sch_v_'+me;
+ if(!own){
+  V=localStorage.getItem(vk)==='1';
+  const vf=getDoc(doc(db,'viewers',me)).then(d=>{V=d.exists();localStorage.setItem(vk,V?'1':'0')}).catch(()=>{});
+  if(localStorage.getItem(vk)===null)await Promise.race([vf,new Promise(r=>setTimeout(r,4000))]);
+ }
+ let fast=false;
+ try{await loadAll(false);fast=true}catch(e){}
+ if(fast){
+  home();
+  loadAll(true).then(()=>{if(cur===null)home()}).catch(()=>{});
+  return;
+ }
+ try{await loadAll(true)}catch(e){$('#app').innerHTML='<p class="empty"><div>⚠️</div>تعذر التحميل: '+esc(e.code||e.message)+'<br>افتح التطبيق مرة واحدة بوجود إنترنت ليُخزَّن، وتأكد أنك معيّن من المدير.</p>';return}
  home();
 });
 
@@ -220,7 +246,7 @@ window.ntE=eid=>{
  const m=modal(`<h3>📝 ملاحظة: ${esc(st.n)}</h3><div class="days" style="flex-wrap:wrap">${['ما جاب دفتر','ما جاب واجب','غائب','متأخر','يحتاج متابعة'].map(x=>`<button data-q="${x}">${x}</button>`).join('')}</div><input id="ntx" value="${esc(cur0)}" placeholder="اكتب الملاحظة"><button class="b" id="nts">حفظ</button><button class="b g" id="ntd">مسح الملاحظة</button>`);
  const inp=m.querySelector('#ntx');
  m.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{inp.value=(inp.value?inp.value+'، ':'')+b.dataset.q});
- const sv=async t=>{try{await setDoc(doc(db,'classes',c.id,'notes',eid),{t,u:Date.now(),by:me},{merge:true});m.remove()}catch(e){toast('تعذر حفظ الملاحظة')}};
+ const sv=async t=>{try{await wSet(doc(db,'classes',c.id,'notes',eid),{t,u:Date.now(),by:me},{merge:true});m.remove()}catch(e){toast('تعذر حفظ الملاحظة')}};
  m.querySelector('#nts').onclick=()=>sv(inp.value.trim());
  m.querySelector('#ntd').onclick=()=>sv('');
 };
@@ -237,7 +263,7 @@ window.addSt=()=>{
   try{
    const b=writeBatch(db);
    add.forEach((n,i)=>{const id='m'+t.toString(36)+i.toString(36),x={n,g:c.g,s:c.s,u:t,by:me};b.set(doc(db,'roster',id),x);ROS.push({eid:id,...x})});
-   await b.commit();
+   await wr(b.commit());
    m.remove();view();toast(`أُضيف ${add.length} طالب${dup?' — '+dup+' مكرر تم تجاهله':''} ✅`);
   }catch(e){ROS=ROS.filter(r=>!add.includes(r.n)||r.g!==c.g||r.s!==c.s||!r.eid.startsWith('m'+t.toString(36)));toast('تعذر الإضافة، تأكد من القواعد');view()}
  };
@@ -245,9 +271,9 @@ window.addSt=()=>{
 window.stM=eid=>{
  const c=curC(),st=ROS.find(r=>r.eid===eid),to=['أ','ب'].filter(x=>x!==c.s);
  const m=modal(`<h3>⋯ ${esc(st.n)}</h3><input id="en" value="${esc(st.n)}"><button class="b" id="sv">💾 حفظ الاسم</button>${own?`<hr style="border:0;border-top:1px solid var(--bd);margin:10px 0"><p class="mu">غيابات سابقة (قبل استخدام البرنامج) تُضاف لمجموع غياب السنة</p><input id="ab" type="number" min="0" inputmode="numeric" value="${+((NT[eid]||{}).ab0)||0}"><button class="b g" id="abs">💾 حفظ الغيابات السابقة</button>`:''}<hr style="border:0;border-top:1px solid var(--bd);margin:10px 0">${to.map(x=>`<button class="b g" data-to="${x}">↪️ نقل إلى شعبة ${x} مع درجاته وملاحظته</button>`).join('')}<button class="b" id="rm" style="background:#c0392b">🗑 حذف الطالب نهائياً</button>`);
- m.querySelector('#sv').onclick=async()=>{const n=m.querySelector('#en').value.replace(/\s+/g,' ').trim();if(!n)return;try{await updateDoc(doc(db,'roster',eid),{n,u:Date.now()});st.n=n;m.remove();view();toast('تم تعديل الاسم ✅')}catch(e){toast('تعذر التعديل')}};
+ m.querySelector('#sv').onclick=async()=>{const n=m.querySelector('#en').value.replace(/\s+/g,' ').trim();if(!n)return;try{await wUpd(doc(db,'roster',eid),{n,u:Date.now()});st.n=n;m.remove();view();toast('تم تعديل الاسم ✅')}catch(e){toast('تعذر التعديل')}};
  const ab=m.querySelector('#abs');
- if(ab)ab.onclick=async()=>{const n=Math.max(0,parseInt(dig(m.querySelector('#ab').value))||0);try{await setDoc(doc(db,'classes',c.id,'notes',eid),{ab0:n,u:Date.now()},{merge:true});m.remove();toast('تم حفظ الغيابات السابقة ✅')}catch(e){toast('تعذر الحفظ')}};
+ if(ab)ab.onclick=async()=>{const n=Math.max(0,parseInt(dig(m.querySelector('#ab').value))||0);try{await wSet(doc(db,'classes',c.id,'notes',eid),{ab0:n,u:Date.now()},{merge:true});m.remove();toast('تم حفظ الغيابات السابقة ✅')}catch(e){toast('تعذر الحفظ')}};
  m.querySelectorAll('[data-to]').forEach(b=>b.onclick=()=>{if(confirm('نقل '+st.n+' إلى '+c.g+' / '+b.dataset.to+' مع كل درجاته؟')){m.remove();mvSt(eid,b.dataset.to)}});
  m.querySelector('#rm').onclick=()=>{if(confirm('حذف '+st.n+' نهائياً مع كل درجاته؟ لا يمكن التراجع.')){m.remove();rmSt(eid)}};
 };
@@ -256,10 +282,10 @@ async function mvSt(eid,to){
  try{
   for(const k of Object.keys(GRD).filter(k=>k.startsWith(eid+'|'))){
    const sub=k.slice(eid.length+1),o=GRD[k];
-   await setDoc(doc(db,'classes',tid,'grades',eid+'__'+sub.replace(/\//g,'-')),{sid:eid,sub,v:o.v||{},p:o.p||{},u:Date.now(),mv:true},{merge:true});
+   await wSet(doc(db,'classes',tid,'grades',eid+'__'+sub.replace(/\//g,'-')),{sid:eid,sub,v:o.v||{},p:o.p||{},u:Date.now(),mv:true},{merge:true});
   }
-  if(NT[eid]&&(NT[eid].t||NT[eid].ab0))await setDoc(doc(db,'classes',tid,'notes',eid),{t:NT[eid].t||'',ab0:NT[eid].ab0||0,u:Date.now(),by:me,mv:true},{merge:true});
-  await updateDoc(doc(db,'roster',eid),{s:to,u:Date.now()});
+  if(NT[eid]&&(NT[eid].t||NT[eid].ab0))await wSet(doc(db,'classes',tid,'notes',eid),{t:NT[eid].t||'',ab0:NT[eid].ab0||0,u:Date.now(),by:me,mv:true},{merge:true});
+  await wUpd(doc(db,'roster',eid),{s:to,u:Date.now()});
   addDoc(collection(db,'moves'),{eid,n:st.n,g:c.g,from:c.s,to,by:me,at:Date.now()}).catch(()=>{});
   st.s=to;view();toast('تم نقل الطالب ✅');
  }catch(e){toast('تعذر النقل: '+(e.code||e.message))}
@@ -267,9 +293,9 @@ async function mvSt(eid,to){
 async function rmSt(eid){
  const c=curC();
  try{
-  for(const k of Object.keys(GRD).filter(k=>k.startsWith(eid+'|'))){const sub=k.slice(eid.length+1);await deleteDoc(doc(db,'classes',c.id,'grades',eid+'__'+sub.replace(/\//g,'-')))}
-  await deleteDoc(doc(db,'classes',c.id,'notes',eid)).catch(()=>{});
-  await updateDoc(doc(db,'roster',eid),{del:true,u:Date.now()});
+  for(const k of Object.keys(GRD).filter(k=>k.startsWith(eid+'|'))){const sub=k.slice(eid.length+1);await wDel(doc(db,'classes',c.id,'grades',eid+'__'+sub.replace(/\//g,'-')))}
+  await wDel(doc(db,'classes',c.id,'notes',eid)).catch(()=>{});
+  await wUpd(doc(db,'roster',eid),{del:true,u:Date.now()});
   ROS=ROS.filter(r=>r.eid!==eid);view();toast('تم حذف الطالب ✅');
  }catch(e){toast('تعذر الحذف: '+(e.code||e.message))}
 }
@@ -383,18 +409,18 @@ window.rq=async eid=>{
  const x=dig(a.trim());let t=null;
  if(x!==''){t=+x;if(isNaN(t)||t<0||t>mx)return toast('الحد الأقصى '+mx)}
  if(t===(old===undefined?null:old))return toast('نفس الدرجة الحالية');
- try{await setDoc(doc(collection(db,'classes',c.id,'edits')),{sid:eid,sub:GS,m:GM,ov:old===undefined?null:old,nv:t,by:me,st:'p',u:Date.now()});toast('أُرسل الطلب لمعلم المادة 📩')}
+ try{await wSet(doc(collection(db,'classes',c.id,'edits')),{sid:eid,sub:GS,m:GM,ov:old===undefined?null:old,nv:t,by:me,st:'p',u:Date.now()});toast('أُرسل الطلب لمعلم المادة 📩')}
  catch(e){toast('تعذر إرسال الطلب')}
 };
 window.ap=async(id,ok)=>{
  const r=EDS.find(x=>x.id===id),c=curC();if(!r)return;
  try{
-  if(ok)await setDoc(doc(db,'classes',c.id,'grades',r.sid+'__'+r.sub.replace(/\//g,'-')),{sid:r.sid,sub:r.sub,u:Date.now(),v:{[r.m]:r.nv}},{merge:true});
-  await updateDoc(doc(db,'classes',c.id,'edits',id),{st:ok?'a':'r',at:Date.now()});
+  if(ok)await wSet(doc(db,'classes',c.id,'grades',r.sid+'__'+r.sub.replace(/\//g,'-')),{sid:r.sid,sub:r.sub,u:Date.now(),v:{[r.m]:r.nv}},{merge:true});
+  await wUpd(doc(db,'classes',c.id,'edits',id),{st:ok?'a':'r',at:Date.now()});
   toast(ok?'تم تطبيق التعديل ✅':'تم رفض الطلب');
  }catch(e){toast('تعذر التنفيذ')}
 };
-window.cx=async id=>{try{await deleteDoc(doc(db,'classes',curC().id,'edits',id))}catch(e){toast('تعذر الإلغاء')}};
+window.cx=async id=>{try{await wDel(doc(db,'classes',curC().id,'edits',id))}catch(e){toast('تعذر الإلغاء')}};
 
 /* ---------- السجل (للمرشد): سجل الطالب والنتائج والطباعة ---------- */
 const MN=['تشرين الأول','تشرين الثاني','كانون الأول','كانون الثاني','نصف السنة','شباط','آذار','نيسان','أيار','النهائي','الدور الثاني'];

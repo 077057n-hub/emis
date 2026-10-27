@@ -45,10 +45,10 @@ button.l{background:var(--card);color:var(--pr);border:1px solid var(--bd);box-s
 <script type="module">
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {getFirestore,doc,getDoc} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,getFirestore,doc,getDoc} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const OWNER='077057n@gmail.com';
 const app=getApps().length?getApp():initializeApp({apiKey:"AIzaSyBkyhe6WrXrBz_jraFt1O0aIW5UoI-oE_g",authDomain:"grades-record-1a3bd.firebaseapp.com",projectId:"grades-record-1a3bd",storageBucket:"grades-record-1a3bd.firebasestorage.app",messagingSenderId:"250496527897",appId:"1:250496527897:web:98d1eedf8b62695f1f0488"});
-const auth=getAuth(app),db=getFirestore(app);
+const auth=getAuth(app);let db;try{db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){db=getFirestore(app)}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clean=s=>String(s||'').replace(/[\s\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g,'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase();
@@ -64,23 +64,24 @@ function loginView(){
  $('#sub').textContent='سجّل دخولك لتظهر لك صلاحياتك';
  $('#box').innerHTML='<input id="em" type="email" dir="ltr" placeholder="الإيميل" autocomplete="email"><input id="pw" type="password" dir="ltr" placeholder="كلمة المرور (6 أحرف على الأقل)"><button onclick="lg()">دخول</button><button class="l" onclick="su()">إنشاء حساب جديد</button><button class="l" onclick="fp()">نسيت كلمة المرور</button><p id="ms"></p>';
 }
-async function roleOf(u){
+async function roleOf(u,onUp){
  const em=(u.email||'').toLowerCase(),ck='app_role_'+u.uid;
  if(em===OWNER)return {owner:true};
- try{
+ let cached=null;try{cached=JSON.parse(localStorage.getItem(ck))}catch(e){}
+ const fetchR=async()=>{
   const [t,v]=await Promise.all([getDoc(doc(db,'teachers',em)),getDoc(doc(db,'viewers',em))]);
   const r={teacher:t.exists(),guide:t.exists()&&!!t.data().guide,viewer:v.exists()};
   try{localStorage.setItem(ck,JSON.stringify(r))}catch(e){}
   return r;
- }catch(e){
-  try{const c=JSON.parse(localStorage.getItem(ck));if(c)return c}catch(x){}
-  return {offline:true};
- }
+ };
+ if(cached){fetchR().then(r=>{if(JSON.stringify(r)!==JSON.stringify(cached)&&onUp)onUp()}).catch(()=>{});return cached}
+ try{return await Promise.race([fetchR(),new Promise((_,j)=>setTimeout(()=>j(new Error('t')),6000))])}
+ catch(e){return {offline:true}}
 }
 const card=(href,e,t,s)=>`<a class="c" href="${href}"><span class="e">${e}</span><div><b>${t}</b><span>${s}</span></div></a>`;
 async function home(u){
  $('#sub').textContent='جاري تحديد صلاحياتك…';
- const r=await roleOf(u),o=!!r.owner;
+ const r=await roleOf(u,()=>home(u)),o=!!r.owner;
  const label=o?'المالك':[r.teacher&&'معلم',r.guide&&'مرشد صف',r.viewer&&'معاون'].filter(Boolean).join(' · ');
  let h=`<div class="u"><span>${esc(u.email)}${label?' — '+label:''}</span><a href="#" onclick="out();return false">خروج</a></div>`;
  if(o||r.teacher||r.guide||r.viewer)h+=card('school.html','🏫','صفوفي (الجديد)','الطلاب والحضور والدرجات بالشعب المعيّنة لك');
