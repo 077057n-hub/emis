@@ -193,14 +193,15 @@ window.home=home;
 function stat(eid){
  let am=0,lm=0,at=0;const pf=AD.slice(0,7);
  for(const k in ATT){const x=(ATT[k].v||{})[eid];if(x==='a'){at++;if(k.startsWith(pf))am++}else if(x==='l'&&k.startsWith(pf))lm++}
- return {am,lm,at};
+ const ab=+((NT[eid]||{}).ab0)||0;
+ return {am,lm,at:at+ab,ab};
 }
 function vSt(c){
  const L=rosterOf(c),sb=Object.entries(c.subjects||{}),mg=own||isGd();
  return `<input id="sq" placeholder="🔍 ابحث باسم الطالب" value="${esc(SQ)}" oninput="sq(this.value)">`
   +`<div class="card"><b>${L.length} طالب<div class="st mu">مرشد الصف: ${esc(c.guideName||'—')}<br>${sb.map(([x])=>esc(x)+': '+esc((c.tn||{})[x]||'—')).join('<br>')}</div></b></div>`
   +(mg?'<button class="b g" onclick="addSt()">➕ إضافة طالب</button>':'')
-  +(L.length?L.map((s,i)=>{const t=stat(s.eid),n=(NT[s.eid]||{}).t;return `<div class="card" data-n="${esc(nrm(s.n))}"><span class="n">${i+1}</span><b>${esc(s.n)}<br><span class="mu">هذا الشهر: ❌ ${t.am} · ⏰ ${t.lm} — كل السنة: ❌ ${t.at}</span>${n?`<div><span class="pill wn">📝 ${esc(n)}</span></div>`:''}</b><button class="ic" onclick="ntE('${s.eid}')">📝</button>${mg?`<button class="ic" onclick="stM('${s.eid}')">⋯</button>`:''}</div>`}).join(''):'<div class="empty"><div>👥</div>لا يوجد طلاب بهذه الشعبة بعد.</div>');
+  +(L.length?L.map((s,i)=>{const t=stat(s.eid),n=(NT[s.eid]||{}).t;return `<div class="card" data-n="${esc(nrm(s.n))}"><span class="n">${i+1}</span><b>${esc(s.n)}<br><span class="mu">هذا الشهر: ❌ ${t.am} · ⏰ ${t.lm} — كل السنة: ❌ ${t.at}${t.ab?' (منها '+t.ab+' سابقة)':''}</span>${n?`<div><span class="pill wn">📝 ${esc(n)}</span></div>`:''}</b><button class="ic" onclick="ntE('${s.eid}')">📝</button>${mg?`<button class="ic" onclick="stM('${s.eid}')">⋯</button>`:''}</div>`}).join(''):'<div class="empty"><div>👥</div>لا يوجد طلاب بهذه الشعبة بعد.</div>');
 }
 /* ---- ملاحظات الطالب ---- */
 window.ntE=eid=>{
@@ -232,8 +233,10 @@ window.addSt=()=>{
 };
 window.stM=eid=>{
  const c=curC(),st=ROS.find(r=>r.eid===eid),to=['أ','ب'].filter(x=>x!==c.s);
- const m=modal(`<h3>⋯ ${esc(st.n)}</h3><input id="en" value="${esc(st.n)}"><button class="b" id="sv">💾 حفظ الاسم</button><hr style="border:0;border-top:1px solid var(--bd);margin:10px 0">${to.map(x=>`<button class="b g" data-to="${x}">↪️ نقل إلى شعبة ${x} مع درجاته وملاحظته</button>`).join('')}<button class="b" id="rm" style="background:#c0392b">🗑 حذف الطالب نهائياً</button>`);
+ const m=modal(`<h3>⋯ ${esc(st.n)}</h3><input id="en" value="${esc(st.n)}"><button class="b" id="sv">💾 حفظ الاسم</button>${own?`<hr style="border:0;border-top:1px solid var(--bd);margin:10px 0"><p class="mu">غيابات سابقة (قبل استخدام البرنامج) تُضاف لمجموع غياب السنة</p><input id="ab" type="number" min="0" inputmode="numeric" value="${+((NT[eid]||{}).ab0)||0}"><button class="b g" id="abs">💾 حفظ الغيابات السابقة</button>`:''}<hr style="border:0;border-top:1px solid var(--bd);margin:10px 0">${to.map(x=>`<button class="b g" data-to="${x}">↪️ نقل إلى شعبة ${x} مع درجاته وملاحظته</button>`).join('')}<button class="b" id="rm" style="background:#c0392b">🗑 حذف الطالب نهائياً</button>`);
  m.querySelector('#sv').onclick=async()=>{const n=m.querySelector('#en').value.replace(/\s+/g,' ').trim();if(!n)return;try{await updateDoc(doc(db,'roster',eid),{n,u:Date.now()});st.n=n;m.remove();view();toast('تم تعديل الاسم ✅')}catch(e){toast('تعذر التعديل')}};
+ const ab=m.querySelector('#abs');
+ if(ab)ab.onclick=async()=>{const n=Math.max(0,parseInt(dig(m.querySelector('#ab').value))||0);try{await setDoc(doc(db,'classes',c.id,'notes',eid),{ab0:n,u:Date.now()},{merge:true});m.remove();toast('تم حفظ الغيابات السابقة ✅')}catch(e){toast('تعذر الحفظ')}};
  m.querySelectorAll('[data-to]').forEach(b=>b.onclick=()=>{if(confirm('نقل '+st.n+' إلى '+c.g+' / '+b.dataset.to+' مع كل درجاته؟')){m.remove();mvSt(eid,b.dataset.to)}});
  m.querySelector('#rm').onclick=()=>{if(confirm('حذف '+st.n+' نهائياً مع كل درجاته؟ لا يمكن التراجع.')){m.remove();rmSt(eid)}};
 };
@@ -244,7 +247,7 @@ async function mvSt(eid,to){
    const sub=k.slice(eid.length+1),o=GRD[k];
    await setDoc(doc(db,'classes',tid,'grades',eid+'__'+sub.replace(/\//g,'-')),{sid:eid,sub,v:o.v||{},p:o.p||{},u:Date.now(),mv:true},{merge:true});
   }
-  if(NT[eid]&&NT[eid].t)await setDoc(doc(db,'classes',tid,'notes',eid),{t:NT[eid].t,u:Date.now(),by:me,mv:true},{merge:true});
+  if(NT[eid]&&(NT[eid].t||NT[eid].ab0))await setDoc(doc(db,'classes',tid,'notes',eid),{t:NT[eid].t||'',ab0:NT[eid].ab0||0,u:Date.now(),by:me,mv:true},{merge:true});
   await updateDoc(doc(db,'roster',eid),{s:to,u:Date.now()});
   addDoc(collection(db,'moves'),{eid,n:st.n,g:c.g,from:c.s,to,by:me,at:Date.now()}).catch(()=>{});
   st.s=to;view();toast('تم نقل الطالب ✅');

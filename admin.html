@@ -6,7 +6,11 @@
 <title>إدارة المدرسة</title>
 <style>
 :root{--g:#1f4d43;--bg:#f3f1ea;--bd:#d6d3c6}
-*{box-sizing:border-box}
+*{box-sizing:border-box;min-width:0}
+html,body{overflow-x:hidden}
+.fr{border-bottom:1px solid #eee;padding:6px 0}.fr span{display:block;font-weight:700;margin-bottom:2px;font-size:14px}.fr select,.fr input{width:100%;margin:2px 0}
+.c{overflow:hidden}
+select{max-width:100%;text-overflow:ellipsis}
 body{margin:0 auto;background:var(--bg);font-family:Tahoma,Arial,sans-serif;padding:14px;max-width:760px;color:#1b1b1b}
 h1{font-size:20px;color:var(--g)}
 a{color:var(--g)}
@@ -66,7 +70,7 @@ function render(){
  ({imp:vImp,cl:vCl,tc:vTc,st:vSt,lg:vLg,gr:vGr,vw:vVw})[tab]();
 }
 Object.assign(window,{
- go:k=>{tab=k;render()},
+ go:k=>{tab=k;CF=null;render()},
  out:()=>signOut(auth),
  lg:()=>ok(()=>signInWithEmailAndPassword(auth,clean($('#em').value),$('#pw').value)),
  su:()=>ok(()=>createUserWithEmailAndPassword(auth,clean($('#em').value),$('#pw').value))
@@ -84,6 +88,7 @@ onAuthStateChanged(auth,u=>{
 });
 
 
+
 /* ---- تعيين الشعب والكادر ---- */
 const syncNames=async(em,nm)=>{
  if(!nm)return;
@@ -97,7 +102,7 @@ const syncNames=async(em,nm)=>{
  }
  CLX=[];
 };
-const tLabel=e=>TNM[e]?TNM[e]+' ('+e+')':e;
+const tLabel=e=>TNM[e]||e;
 async function vCl(){
  const [cs,ts]=await Promise.all([getDocs(collection(db,'classes')),getDocs(collection(db,'teachers'))]);
  TNM={};ts.docs.forEach(d=>TNM[d.id]=d.data().name||'');
@@ -106,6 +111,7 @@ async function vCl(){
  $('#v').innerHTML=`<div class="c"><b>➕ إضافة شعبة</b><div class="r"><select id="ng">${GR.map(g=>`<option>${g}</option>`).join('')}</select><select id="ns">${SEC.map(s=>`<option>${s}</option>`).join('')}</select><button onclick="addCl()">إضافة</button></div></div>`
   +(CLX.length?CLX.map(c=>`<div class="c"><div class="r"><b>${esc(c.g)} / ${esc(c.s)}<br><span class="m">مرشد الصف: ${esc(c.guideName||(c.guide?c.guide:'—'))}<br>${Object.keys(c.subjects||{}).length} مادة معيّنة</span></b><button class="l" onclick="editCl('${c.id}')">👥 تعيين</button><button class="l" onclick="delCl('${c.id}')">🗑</button></div></div>`).join(''):'<p class="m">لا توجد شعب. أضف شعبة من الأعلى.</p>');
 }
+window.backCl=()=>{CF=null;vCl()};
 window.addCl=()=>ok(async()=>{
  const g=$('#ng').value,s=$('#ns').value,id=g+'_'+s;
  if(CLX.some(c=>c.id===id))return msg('الشعبة موجودة مسبقاً');
@@ -116,10 +122,10 @@ window.delCl=id=>{if(confirm('حذف الشعبة؟ (الطلاب والدرجا
 window.editCl=id=>{CF=CLX.find(c=>c.id===id);vClForm()};
 function vClForm(){
  const c=CF,opts=sel=>'<option value="">— بدون —</option>'+Object.keys(TNM).sort().map(e=>`<option value="${esc(e)}"${e===sel?' selected':''}>${esc(tLabel(e))}</option>`).join('');
- $('#v').innerHTML=`<button class="l" onclick="CF=null;vCl()">⬅️ رجوع</button><h3 style="margin:8px 0">${esc(c.g)} / ${esc(c.s)}</h3>`
+ $('#v').innerHTML=`<button class="l" onclick="backCl()">⬅️ رجوع</button><h3 style="margin:8px 0">${esc(c.g)} / ${esc(c.s)}</h3>`
   +(Object.keys(TNM).length?'':'<p class="m" style="color:#b3261e">لا يوجد معلمون مسجلون. أضفهم أولاً من تبويب «المعلمون».</p>')
   +`<div class="c"><b>مرشد الصف</b><select id="cg">${opts(c.guide)}</select></div><div class="c"><b>معلم كل مادة</b>`
-  +SUBS.map((sb,i)=>`<div class="r"><span style="min-width:120px">${sb}</span><select class="cs" data-sb="${sb}" style="flex:1">${opts((c.subjects||{})[sb])}</select></div>`).join('')
+  +SUBS.map((sb,i)=>`<div class="fr"><span>${sb}</span><select class="cs" data-sb="${sb}">${opts((c.subjects||{})[sb])}</select></div>`).join('')
   +`</div><button onclick="saveCl()">💾 حفظ التعيينات</button>`;
 }
 window.saveCl=()=>ok(async()=>{
